@@ -78,7 +78,7 @@ const DragWindow = withResizeDetector(function (props) {
 
   const minSize = {
     height: 100,
-    width: 300,
+    width: 200,
   };
 
   const initialPosition = {
@@ -257,6 +257,76 @@ const DragWindow = withResizeDetector(function (props) {
     updatePosAndSize(newPos, newSize, minSize, wrapperSize);
   }, [wrapperSize.width, wrapperSize.height]);
 
+  let headerContents = "";
+  let titleContents = (
+    <DragHandle
+      onDrag={onDrag}
+      classNames={["title", !isDragEnabled ? "not-allowed" : ""]}
+    >
+      Title ({observedWidth}
+      {" x "}
+      {observedHeight})
+    </DragHandle>
+  );
+  let leftHeaderActionContents = (
+    <div {...classes("actions", "row")}>
+      <div {...classes("button", "now-allowed")} title="Anchor">
+        <FlareIcon />
+      </div>
+      <div
+        {...classes("button")}
+        onClick={() => toggleDragEnabled()}
+        title={isDragEnabled ? "Disable drag" : "Enable drag"}
+      >
+        {isDragEnabled ? <OpenWithIcon /> : <CloseIcon />}
+      </div>
+    </div>
+  );
+
+  let rightHeaderActionContents = (
+    <div {...classes("actions", "row")}>
+      <div
+        {...classes("button", "now-allowed")}
+        onClick={() => setIsMinimized(!isMinimized)}
+      >
+        <MinimizeIcon />
+      </div>
+      <div
+        {...classes("button", "now-allowed")}
+        onClick={() => setIsFullSize(!isFullSize)}
+        title={isFullSize ? "Restore size" : "Maximize size"}
+      >
+        {isFullSize ? <FullscreenExitIcon /> : <FullscreenIcon />}
+      </div>
+      <div {...classes("button", "now-allowed")} title="Close">
+        <CloseIcon />
+      </div>
+    </div>
+  );
+
+  if (size.width > 300) {
+    headerContents = (
+      <div {...classes("header", "noselect")}>
+        <div {...classes("row")}>
+          {leftHeaderActionContents}
+          {titleContents}
+          {rightHeaderActionContents}
+        </div>
+      </div>
+    );
+  } else {
+    headerContents = (
+      <div {...classes("header", "noselect")}>
+        <div {...classes("row")}>{titleContents}</div>
+        <div {...classes("row")}>
+          {leftHeaderActionContents}
+          <div {...classes("spacer", " button")} />
+          {rightHeaderActionContents}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       style={{
@@ -310,57 +380,7 @@ const DragWindow = withResizeDetector(function (props) {
           ></DragHandle>
           <div {...classes(["inner_content", "grow", "column"])}>
             <FillContainer>
-              <FillHeader>
-                <div {...classes("header", "noselect")}>
-                  <div {...classes("row")}>
-                    <div {...classes("actions", "row")}>
-                      <div {...classes("button", "now-allowed")} title="Anchor">
-                        <FlareIcon />
-                      </div>
-                      <div
-                        {...classes("button")}
-                        onClick={() => toggleDragEnabled()}
-                        title={isDragEnabled ? "Disable drag" : "Enable drag"}
-                      >
-                        {isDragEnabled ? <OpenWithIcon /> : <CloseIcon />}
-                      </div>
-                    </div>
-                    <DragHandle
-                      onDrag={onDrag}
-                      classNames={[
-                        "title",
-                        !isDragEnabled ? "not-allowed" : "",
-                      ]}
-                    >
-                      Title ({observedWidth}
-                      {" x "}
-                      {observedHeight})
-                    </DragHandle>
-                    <div {...classes("actions", "row")}>
-                      <div
-                        {...classes("button", "now-allowed")}
-                        onClick={() => setIsMinimized(!isMinimized)}
-                      >
-                        <MinimizeIcon />
-                      </div>
-                      <div
-                        {...classes("button", "now-allowed")}
-                        onClick={() => setIsFullSize(!isFullSize)}
-                        title={isFullSize ? "Restore size" : "Maximize size"}
-                      >
-                        {isFullSize ? (
-                          <FullscreenExitIcon />
-                        ) : (
-                          <FullscreenIcon />
-                        )}
-                      </div>
-                      <div {...classes("button", "now-allowed")} title="Close">
-                        <CloseIcon />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </FillHeader>
+              <FillHeader>{headerContents}</FillHeader>
 
               <FillContent
                 classNames={["window-content", "tint-bkgd", "column"]}
@@ -496,8 +516,25 @@ function DragHandle(props) {
   const { children, classNames = [] } = props;
   const { onDrag } = props;
 
+  const [isActive, setIsActive] = useState(false);
+
+  const setActive = () => {
+    setIsActive(true);
+  };
+  const setInactive = () => {
+    setIsActive(false);
+  };
+
   return (
-    <motion.div {...props} {...classes("noselect", classNames)} onPan={onDrag}>
+    <motion.div
+      {...props}
+      {...classes("noselect", classNames, isActive ? "active" : "")}
+      onPan={onDrag}
+      onMouseEnter={setActive}
+      onMouseLeave={setInactive}
+      onTouchStart={setActive}
+      onTouchEnd={setInactive}
+    >
       {children}
     </motion.div>
   );

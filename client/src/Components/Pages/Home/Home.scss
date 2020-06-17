@@ -20,9 +20,6 @@ body,
   flex-direction: row;
 }
 
-.title {
-  flex-grow: 1;
-}
 .column,
 .row {
   display: flex;
@@ -48,17 +45,7 @@ body,
 .button:hover {
   background-color: #00000099;
 }
-.title:hover {
-  background-color: #ffffffd6;
-  color: black;
-  cursor: move;
-}
-.title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 150ms linear;
-}
+
 [contenteditable] {
   outline: 1px solid transparent;
 }
@@ -80,13 +67,31 @@ body,
   justify-content: center;
   border: 1px solid #ffffff40;
   width: 500px;
-  overflow: hidden;
   .header {
     width: 100%;
     display: flex;
     flex-direction: column;
     background-color: #00000066;
     margin-bottom: 5px;
+    .spacer {
+      content: "";
+      display: flex;
+      flex-grow: 1;
+    }
+    .title {
+      background-color: #00000066;
+      flex-grow: 1;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 150ms linear;
+    }
+    .title:hover {
+      background-color: #ffffffd6;
+      color: black;
+      cursor: move;
+    }
   }
   .tint-bkgd {
     background-color: #00000066;
@@ -265,8 +270,8 @@ $indicatorColor: #00000050;
   position: absolute;
 }
 
-$resizeHandleWidth: 4px;
-$resizeHandleHeight: 4px;
+$resizeHandleWidth: 10px;
+$resizeHandleHeight: 10px;
 $cornerColor: #ff990000;
 $cornerHoverColor: #ff9900;
 $sideColor: #0099ff00;
@@ -279,9 +284,8 @@ $transition: all 150ms linear;
   background-color: $sideColor;
   transition: $transition;
 }
-.resize-handle:hover {
-  content: "";
-  position: absolute;
+
+.resize-handle.active {
   background-color: $sideHoverColor;
 }
 
@@ -290,6 +294,7 @@ $transition: all 150ms linear;
   top: 0px;
   height: 100%;
   width: $resizeHandleWidth;
+  transform: translateX(50%);
   cursor: ew-resize;
 }
 
@@ -298,6 +303,7 @@ $transition: all 150ms linear;
   top: 0px;
   height: 100%;
   width: $resizeHandleWidth;
+  transform: translateX(-50%);
   cursor: ew-resize;
 }
 
@@ -306,6 +312,7 @@ $transition: all 150ms linear;
   left: 0px;
   width: 100%;
   height: $resizeHandleHeight;
+  transform: translateY(-50%);
   cursor: ns-resize;
 }
 
@@ -314,6 +321,7 @@ $transition: all 150ms linear;
   left: 0px;
   width: 100%;
   height: $resizeHandleHeight;
+  transform: translateY(50%);
   cursor: ns-resize;
 }
 
@@ -323,7 +331,7 @@ $transition: all 150ms linear;
   background-color: $cornerColor;
   transition: $transition;
 }
-.resize-handle-corner:hover {
+.resize-handle-corner.active {
   background-color: $cornerHoverColor;
 }
 
@@ -333,6 +341,7 @@ $transition: all 150ms linear;
   width: $resizeHandleWidth;
   height: $resizeHandleHeight;
   cursor: nwse-resize;
+  transform: translateX(50%) translateY(50%);
 }
 
 .resize-handle-nw {
@@ -341,6 +350,7 @@ $transition: all 150ms linear;
   width: $resizeHandleWidth;
   height: $resizeHandleHeight;
   cursor: nwse-resize;
+  transform: translateX(-50%) translateY(-50%);
 }
 
 .resize-handle-ne {
@@ -349,6 +359,7 @@ $transition: all 150ms linear;
   width: $resizeHandleWidth;
   height: $resizeHandleHeight;
   cursor: nesw-resize;
+  transform: translateX(50%) translateY(-50%);
 }
 
 .resize-handle-sw {
@@ -357,4 +368,5 @@ $transition: all 150ms linear;
   width: $resizeHandleWidth;
   height: $resizeHandleHeight;
   cursor: nesw-resize;
+  transform: translateX(-50%) translateY(50%);
 }
