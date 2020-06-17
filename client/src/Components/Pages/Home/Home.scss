@@ -37,7 +37,8 @@ body,
 .button {
   background-color: #00000066;
   transition: all 150ms linear;
-  height: 34px;
+  min-height: 34px;
+  height: 100%;
   width: 34px;
   display: flex;
   align-items: center;
@@ -196,4 +197,62 @@ body,
 .window-content {
   height: calc(100% - 35px);
   overflow: auto;
+}
+
+$indicatorColor: #00000050;
+
+.top-left-indicator {
+  background-color: $indicatorColor;
+  content: "";
+  width: 50px;
+  height: 50px;
+  clip-path: polygon(
+    0 20%,
+    0% 100%,
+    20% 100%,
+    20% 20%,
+    100% 20%,
+    100% 0,
+    20% 0,
+    20% 20%,
+    20% 20%,
+    20% 20%
+  );
+  top: 10px;
+  left: 10px;
+  position: absolute;
+}
+
+.left-indicator {
+  background-color: $indicatorColor;
+  content: "";
+  width: 10px;
+  height: 50px;
+
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  position: absolute;
+}
+
+.bottom-left-indicator {
+  background-color: $indicatorColor;
+  content: "";
+  width: 50px;
+  height: 50px;
+  clip-path: polygon(
+    0 0,
+    0 80%,
+    20% 80%,
+    20% 100%,
+    100% 100%,
+    100% 80%,
+    20% 80%,
+    20% 80%,
+    20% 80%,
+    20% 0
+  );
+  bottom: 10px;
+  left: 10px;
+  position: absolute;
 }

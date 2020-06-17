@@ -19,10 +19,15 @@ import FillContainer from "../../Containers/FillContainer/FillContainer";
 import FillContent from "../../Containers/FillContainer/FillContent";
 import FillHeader from "../../Containers/FillContainer/FillHeader";
 import FillFooter from "../../Containers/FillContainer/FillFooter";
+import RelLayer from "../../Layers/RelLayer";
 import config from "../../../config";
 
 import "./Home.scss";
 const { getNestedValue, isDef, isArr, isStr, classes } = Utils;
+
+function clamp(min, value, max) {
+  return Math.min(Math.max(min, value), max);
+}
 
 const containerStyles = {
   width: "100%",
@@ -36,7 +41,7 @@ const AdaptiveComponent = ({ width, height, children }) => {
   const [color, setColor] = useState("red");
 
   useEffect(() => {
-    setColor(width > 500 ? "#09f" : "#f90");
+    setColor(width > 500 ? "#0099ffA0" : "#00bb00A0");
   }, [width]);
 
   return (
@@ -52,6 +57,174 @@ const AdaptiveComponent = ({ width, height, children }) => {
 
 const AdaptiveWithDetector = withResizeDetector(AdaptiveComponent);
 
+function DragWindow(props) {
+  const [isDragEnabled, setDragEnabled] = useState(true);
+  const [isFullSize, setIsFullSize] = useState(false);
+  const [position, setPosition] = useState({});
+  const { width, height, wrapperSize } = props;
+  const toggleDragEnabled = () => {
+    console.log("toggle");
+    setDragEnabled(!isDragEnabled);
+  };
+
+  const handleY = useMotionValue(0);
+  const handleX = useMotionValue(0);
+  const newX = useTransform(handleX, (value) => {
+    return value;
+  });
+  const newY = useTransform(handleY, (value) => {
+    return value;
+  });
+  if (isFullSize) {
+    if (newX.get() !== 0) newX.set(0);
+    if (newY.get() !== 0) newY.set(0);
+  }
+
+  const windowSize = { width, height };
+
+  const onDrag = (e, info) => {
+    if (isDragEnabled) {
+      if (isFullSize) {
+        setIsFullSize(false);
+      }
+      const posY = clamp(
+        0,
+        handleY.get() + info.delta.y,
+        wrapperSize.height - height
+      );
+      const posX = clamp(
+        0,
+        handleX.get() + info.delta.x,
+        wrapperSize.width - width
+      );
+
+      handleY.set(posY);
+      handleX.set(posX);
+      setPosition({
+        left: posX,
+        top: posY,
+      });
+    }
+  };
+
+  return (
+    <motion.div
+      style={{
+        position: "absolute",
+        ...(isFullSize
+          ? { top: "0px", left: "0px" }
+          : { top: newY, left: newX }),
+        ...(isFullSize ? { height: "100%", width: "100%" } : {}),
+      }}
+      transition={{ type: "spring", stiffness: 200 }}
+      {...classes("window", "resizable", "blurred_bkgd")}
+    >
+      <div {...classes("full_wrapper", "main_bkgd")}>
+        <div {...classes("window-shell", "grow")}>
+          <div {...classes("inner_content", "grow", "column")}>
+            <FillContainer>
+              <FillHeader>
+                <div {...classes("header", "noselect")}>
+                  <div {...classes("row")}>
+                    <div {...classes("actions", "row")}>
+                      <div {...classes("button", "now-allowed")}>.</div>
+                      <div
+                        {...classes("button")}
+                        onClick={() => toggleDragEnabled()}
+                      >
+                        {isDragEnabled ? <OpenWithIcon /> : <CloseIcon />}
+                      </div>
+                    </div>
+                    <DragHandle
+                      onDrag={onDrag}
+                      {...classes([
+                        "title",
+                        !isDragEnabled ? "not-allowed" : "",
+                      ])}
+                    >
+                      Title {width}x{height}
+                    </DragHandle>
+                    <div {...classes("actions", "row")}>
+                      <div
+                        {...classes("button", "now-allowed")}
+                        onClick={() => setIsFullSize(!isFullSize)}
+                      >
+                        <ZoomOutMapIcon />
+                      </div>
+                      <div {...classes("button", "now-allowed")}>
+                        <CloseIcon />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </FillHeader>
+
+              <FillContent
+                classNames={["window-content", "tint-bkgd", "column"]}
+              >
+                <AdaptiveWithDetector>
+                  <div {...classes("body", "grow")}>
+                    <div {...classes("grow")}>
+                      <div {...classes("column")}>
+                        <div {...classes("row")}>
+                          {isDragEnabled
+                            ? "Dragging enabled"
+                            : "Dragging disabled"}
+                        </div>
+                        <div {...classes("row", "align-left")}>
+                          <div {...classes("column")}>
+                            wrapperSize:{" "}
+                            <pre>
+                              <xmp>{JSON.stringify(wrapperSize, null, 2)}</xmp>
+                            </pre>
+                          </div>
+                          <div {...classes("column")}>
+                            windowSize:{" "}
+                            <pre>
+                              <xmp>{JSON.stringify(windowSize, null, 2)}</xmp>
+                            </pre>
+                          </div>
+                          <div {...classes("column")}>
+                            position:
+                            <pre>
+                              <xmp>{JSON.stringify(position, null, 2)}</xmp>
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </AdaptiveWithDetector>
+              </FillContent>
+
+              <FillFooter height={60}>Footer</FillFooter>
+            </FillContainer>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+const DragWindowResizeDetector = withResizeDetector(DragWindow);
+
+function WindowArea(props) {
+  const [isDragEnabled, setDragEnabled] = useState(true);
+  const { width, height } = props;
+  const size = { width, height };
+  return (
+    <RelLayer {...classes("full_wrapper", "full")}>
+      <RelLayer>
+        <div {...classes("top-left-indicator")}></div>
+        <div {...classes("left-indicator")}></div>
+        <div {...classes("bottom-left-indicator")}></div>
+        <DragWindowResizeDetector wrapperSize={size} />
+      </RelLayer>
+    </RelLayer>
+  );
+}
+const WindowAreaResizeDetector = withResizeDetector(WindowArea);
+
 function Home(props) {
   return (
     <div {...classes("full", "row", "main_bkgd")}>
@@ -61,7 +234,7 @@ function Home(props) {
           <AppHeader />
         </FillHeader>
         <FillContent>
-          <WindowArea />
+          <WindowAreaResizeDetector />
         </FillContent>
         <FillFooter>
           <div {...classes("full")}>
@@ -105,183 +278,6 @@ function ToolbarButton(props = {}) {
     >
       {children}
     </div>
-  );
-}
-
-function DragWindow(props) {
-  const [isDragEnabled, setDragEnabled] = useState(true);
-  const [position, setPosition] = useState({});
-  const { width, height } = props;
-  const toggleDragEnabled = () => {
-    console.log("toggle");
-    setDragEnabled(!isDragEnabled);
-  };
-
-  const { wrapperSize } = props;
-  const [elementSize, setElementSize] = useState({});
-
-  const _setElementSize = (...args) => {
-    console.log("_setElementSize", ...args);
-    setElementSize(...args);
-  };
-
-  const handleY = useMotionValue(0);
-  const handleX = useMotionValue(0);
-  let wrapperWidth = getNestedValue(wrapperSize, ["total", "width"], 0);
-  let wrapperHeight = getNestedValue(wrapperSize, ["total", "height"], 0);
-  let elementWidth = getNestedValue(elementSize, ["total", "width"], 0);
-  let elementHeight = getNestedValue(elementSize, ["total", "height"], 0);
-
-  const newX = useTransform(handleX, (value) => {
-    return value;
-  });
-  const newY = useTransform(handleY, (value) => {
-    return value;
-  });
-
-  const onDrag = (e, info) => {
-    if (isDragEnabled) {
-      const posY = handleY.get() + info.delta.y;
-      const posX = handleX.get() + info.delta.x;
-
-      handleY.set(posY);
-      handleX.set(posX);
-      setPosition({
-        left: posX,
-        top: posY,
-      });
-    }
-  };
-
-  return (
-    <motion.div
-      style={{
-        position: "absolute",
-        left: newX,
-        top: newY,
-      }}
-      transition={{ type: "spring", stiffness: 200 }}
-      {...classes("window", "resizable", "blurred_bkgd")}
-    >
-      <SizeTaddleTail
-        onChange={(e) => _setElementSize(e)}
-        {...classes("full_wrapper", "main_bkgd")}
-      >
-        <div {...classes("window-shell", "grow")}>
-          <div {...classes("inner_content", "grow", "column")}>
-            <FillContainer>
-              <FillHeader>
-                <div {...classes("header", "noselect")}>
-                  <div {...classes("row")}>
-                    <div {...classes("actions", "row")}>
-                      <div {...classes("button", "now-allowed")}>.</div>
-                      <div
-                        {...classes("button")}
-                        onClick={() => toggleDragEnabled()}
-                      >
-                        {isDragEnabled ? <OpenWithIcon /> : <CloseIcon />}
-                      </div>
-                    </div>
-                    <DragHandle
-                      onDrag={onDrag}
-                      {...classes([
-                        "title",
-                        !isDragEnabled ? "not-allowed" : "",
-                      ])}
-                    >
-                      Title {width}x{height}
-                    </DragHandle>
-                    <div {...classes("actions", "row")}>
-                      <div {...classes("button", "now-allowed")}>
-                        <ZoomOutMapIcon />
-                      </div>
-                      <div {...classes("button", "now-allowed")}>
-                        <CloseIcon />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </FillHeader>
-
-              <FillContent
-                classNames={["window-content", "tint-bkgd", "column"]}
-              >
-                <AdaptiveWithDetector>
-                  <div {...classes("body", "grow")}>
-                    <div {...classes("grow", "align-left")}>
-                      {isDragEnabled ? "TRUE" : "FALSE"}
-
-                      <div {...classes("row")}>
-                        <div {...classes("column")}>
-                          elementSize:{" "}
-                          <pre>
-                            <xmp>{JSON.stringify(elementSize, null, 2)}</xmp>
-                          </pre>
-                        </div>
-                        <div {...classes("column")}>
-                          wrapperSize:{" "}
-                          <pre>
-                            <xmp>{JSON.stringify(wrapperSize, null, 2)}</xmp>
-                          </pre>
-                        </div>
-                      </div>
-                      <div {...classes("row")}>
-                        <div {...classes("column")}></div>
-
-                        <div {...classes("column")}>
-                          position:
-                          <pre>
-                            <xmp>{JSON.stringify(position, null, 2)}</xmp>
-                          </pre>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </AdaptiveWithDetector>
-              </FillContent>
-            </FillContainer>
-          </div>
-        </div>
-      </SizeTaddleTail>
-    </motion.div>
-  );
-}
-
-const DragWindowResizeDetector = withResizeDetector(DragWindow);
-
-function WindowArea(props) {
-  const [isDragEnabled, setDragEnabled] = useState(true);
-  const toggleDragEnabled = () => {
-    console.log("toggle");
-    setDragEnabled(!isDragEnabled);
-  };
-
-  const [wrapperSize, setWrapperSize] = useState({});
-  const [elementSize, setElementSize] = useState({});
-
-  const handleY = useMotionValue(0);
-  const handleX = useMotionValue(0);
-  let wrapperWidth = getNestedValue(wrapperSize, ["total", "width"], 0);
-  let wrapperHeight = getNestedValue(wrapperSize, ["total", "height"], 0);
-  let elementWidth = getNestedValue(elementSize, ["total", "width"], 0);
-  let elementHeight = getNestedValue(elementSize, ["total", "height"], 0);
-
-  let moveConstraints = {
-    top: 0,
-    left: 0,
-    right: wrapperWidth - elementWidth,
-    bottom: wrapperHeight - elementHeight,
-  };
-  return (
-    <SizeTaddleTail
-      onChange={(e) => setWrapperSize(e)}
-      {...classes("full_wrapper")}
-      style={{
-        position: "relative",
-      }}
-    >
-      <DragWindowResizeDetector wrapperSize={wrapperSize} />
-    </SizeTaddleTail>
   );
 }
 
