@@ -8,6 +8,10 @@ const isStr = (v) => isDef(v) && typeof v === "string";
 const isNum = (v) => isDef(v) && typeof v === "number";
 const isObj = (v) => isDef(v) && typeof v === "object";
 
+function clamp(min, value, max) {
+  return Math.min(Math.max(min, value), max);
+}
+
 const getNestedValue = function (reference, path, fallback = undefined) {
   path = isArr(path) ? path : [path];
 
@@ -146,6 +150,7 @@ export default {
   isNum,
   isObj,
   els,
+  clamp,
   classes,
   getNestedValue,
   setNestedValue,

@@ -1,29 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { withResizeDetector } from "react-resize-detector";
-import Utils from "../../../../Utils";
 import { motion, useTransform, useMotionValue } from "framer-motion";
 import CloseIcon from "@material-ui/icons/Close";
 import MinimizeIcon from "@material-ui/icons/Minimize";
-import ChatBubbleIcon from "@material-ui/icons/ChatBubble";
-import BugReportIcon from "@material-ui/icons/BugReport";
-import PeopleIcon from "@material-ui/icons/People";
-import HomeIcon from "@material-ui/icons/Home";
-import MenuIcon from "@material-ui/icons/Menu";
-import ExitToAppIcon from "@material-ui/icons/ExitToApp";
-import ZoomOutMapIcon from "@material-ui/icons/ZoomOutMap";
+import FlareIcon from "@material-ui/icons/Flare";
+import FullscreenIcon from "@material-ui/icons/Fullscreen";
+import FullscreenExitIcon from "@material-ui/icons/FullscreenExit";
 import OpenWithIcon from "@material-ui/icons/OpenWith";
-import FillContainer from "../../../../Components/Containers/FillContainer/FillContainer";
-import FillContent from "../../../../Components/Containers/FillContainer/FillContent";
-import FillHeader from "../../../../Components/Containers/FillContainer/FillHeader";
-import FillFooter from "../../../../Components/Containers/FillContainer/FillFooter";
-import RelLayer from "../../../../Components/Layers/RelLayer";
+import FillContainer from "../../../../../src/Components/Containers/FillContainer/FillContainer";
+import FillContent from "../../../../../src/Components/Containers/FillContainer/FillContent";
+import FillHeader from "../../../../../src/Components/Containers/FillContainer/FillHeader";
+import FillFooter from "../../../../../src/Components/Containers/FillContainer/FillFooter";
+import DragHandle from "../../../../../src/Components/Functional/DragHandle/";
+import Utils from "../../../../../src/Utils";
+const { getNestedValue, classes, setImmutableValue } = Utils;
 
-const { getNestedValue, isDef, isArr, isStr, classes } = Utils;
-
-function clamp(min, value, max) {
-  return Math.min(Math.max(min, value), max);
-}
-
+// Small component to change the background color based on size
 const containerStyles = {
   width: "100%",
   height: "100%",
@@ -31,86 +23,330 @@ const containerStyles = {
   alignItems: "center",
   justifyContent: "center",
 };
-
-const AdaptiveComponent = ({ width, height, children }) => {
-  const [color, setColor] = useState("red");
-
+const AdaptiveComponent = withResizeDetector(({ width, height, children }) => {
+  const [color, setColor] = useState("#0099ffA0");
   useEffect(() => {
-    setColor(width > 500 ? "#0099ffA0" : "#00bb00A0");
+    setColor(
+      width > 500 ? "#0099ffA0" : width > 300 ? "#00bb00A0" : "#ff9900A0"
+    );
   }, [width]);
 
   return (
     <div
       {...classes(["column"])}
-      style={{ backgroundColor: color, ...containerStyles }}
+      style={{
+        transition: "all 150ms linear",
+        backgroundColor: color,
+        ...containerStyles,
+      }}
     >
-      <div>{`${width}x${height}`}</div>
+      <div>{`(${width} x ${height})`}</div>
       <div> {children}</div>
     </div>
   );
-};
+});
 
-const AdaptiveWithDetector = withResizeDetector(AdaptiveComponent);
-
-function DragWindow(props) {
+const DragWindow = withResizeDetector(function (props) {
+  let { width: observedWidth, height: observedHeight } = props;
+  let { title = "Untitled", containerSize } = props;
+  const borderSize = 1;
+  const windowSize = {
+    width: Math.ceil(parseFloat(observedWidth)) + 2 * borderSize,
+    height: Math.ceil(parseFloat(observedHeight)) + 2 * borderSize,
+  };
   const [isDragEnabled, setDragEnabled] = useState(true);
   const [isFullSize, setIsFullSize] = useState(false);
-  const [position, setPosition] = useState({});
-  const { width, height, wrapperSize } = props;
+  const [isMinimized, setIsMinimized] = useState(false);
+
+  const minSize = {
+    height: 100,
+    width: 200,
+  };
+
+  const initialPosition = {
+    top: 0,
+    left: 0,
+  };
+
+  const initialSize = {
+    height: 600,
+    width: 600,
+  };
+  const initialWidth = 600;
+  const initialHeight = 400;
+
+  const [size, setSize] = useState({
+    width: initialSize.width,
+    height: initialSize.height,
+  });
+
+  useEffect(() => {
+    setSize(initialSize);
+  }, []);
+  const [position, setPosition] = useState(initialPosition);
   const toggleDragEnabled = () => {
-    console.log("toggle");
     setDragEnabled(!isDragEnabled);
   };
 
   const handleY = useMotionValue(0);
   const handleX = useMotionValue(0);
-  const newX = useTransform(handleX, (value) => {
-    return value;
-  });
-  const newY = useTransform(handleY, (value) => {
-    return value;
-  });
+  const newX = useTransform(handleX, (v) => v);
+  const newY = useTransform(handleY, (v) => v);
   if (isFullSize) {
     if (newX.get() !== 0) newX.set(0);
     if (newY.get() !== 0) newY.set(0);
   }
 
-  const windowSize = { width, height };
+  // Dont allow to resize outside of bounds
+  function restrictAxis(
+    pos,
+    posField,
+    size,
+    sizeField,
+    minSize,
+    containerSize
+  ) {
+    // Limit drag position
+    if (pos[posField] < 0) pos[posField] = 0;
 
-  function DragHandle(props) {
-    const { children } = props;
-    const { onDrag } = props;
-    return (
-      <motion.div {...props} onPan={onDrag}>
-        {children}
-      </motion.div>
-    );
+    if (containerSize[sizeField] < size[sizeField])
+      size[sizeField] = containerSize[sizeField];
+
+    let limitBounds;
+    let difference;
+    limitBounds = pos[posField] + size[sizeField];
+    if (limitBounds > containerSize[sizeField]) {
+      if (pos[posField] > 0) {
+        difference = limitBounds - containerSize[sizeField];
+        if (difference < pos[posField]) {
+          pos[posField] -= difference;
+        } else {
+          pos[posField] = 0;
+        }
+      } else {
+        limitBounds = pos[posField] + size[sizeField];
+        difference = limitBounds - containerSize[sizeField];
+        if (difference > 0) {
+          size[sizeField] = containerSize[sizeField];
+        }
+      }
+    }
+
+    if (size[sizeField] < minSize[sizeField])
+      size[sizeField] = minSize[sizeField];
   }
+
+  // Side effect: will mutate the input values
+  const updatePosAndSize = (newPos, newSize, minSize, containerSize) => {
+    restrictAxis(newPos, "top", newSize, "height", minSize, containerSize);
+    restrictAxis(newPos, "left", newSize, "width", minSize, containerSize);
+    handleY.set(newPos.top);
+    handleX.set(newPos.left);
+    setPosition(newPos);
+    setSize(newSize);
+  };
 
   const onDrag = (e, info) => {
     if (isDragEnabled) {
       if (isFullSize) {
         setIsFullSize(false);
       }
-      const posY = clamp(
-        0,
-        handleY.get() + info.delta.y,
-        wrapperSize.height - height
-      );
-      const posX = clamp(
-        0,
-        handleX.get() + info.delta.x,
-        wrapperSize.width - width
-      );
 
-      handleY.set(posY);
-      handleX.set(posX);
-      setPosition({
-        left: posX,
-        top: posY,
-      });
+      let delta = info.delta;
+      if (delta.x !== 0 || delta.y !== 0) {
+        const posY = handleY.get() + delta.y;
+        const posX = handleX.get() + delta.x;
+        const newPos = {
+          left: posX,
+          top: posY,
+        };
+        const newSize = {
+          width: size.width,
+          height: size.height,
+        };
+        updatePosAndSize(newPos, newSize, minSize, containerSize);
+      }
     }
   };
+
+  // Resize window
+  const makeOnDragReize = (key) => {
+    return function (e, info) {
+      let delta = info.delta;
+      if (delta.x !== 0 || delta.y !== 0) {
+        let originalWidth = getNestedValue(size, "width", null);
+        if (Number.isNaN(originalWidth)) originalWidth = initialWidth;
+
+        let originalHeight = getNestedValue(size, "height", null);
+        if (Number.isNaN(originalHeight)) originalHeight = initialHeight;
+
+        let newPos = position;
+
+        // Make sure values are defined
+        let newSize = size;
+        if (Number.isNaN(size.height)) {
+          newSize = setImmutableValue(newSize, "height", originalHeight);
+        }
+        if (Number.isNaN(size.width)) {
+          newSize = setImmutableValue(newSize, "width", originalWidth);
+        }
+
+        // Right side
+        if (["e", "se", "ne"].includes(key)) {
+          newSize = setImmutableValue(
+            newSize,
+            "width",
+            originalWidth + delta.x
+          );
+        }
+
+        // Left side
+        if (["w", "sw", "nw"].includes(key)) {
+          newSize = setImmutableValue(
+            newSize,
+            "width",
+            originalWidth - delta.x
+          );
+          newPos = setImmutableValue(newPos, "left", newPos.left + delta.x);
+          console.log("newPos", newPos);
+        }
+
+        // Top side
+        if (["n", "ne", "nw"].includes(key)) {
+          newSize = setImmutableValue(
+            newSize,
+            "height",
+            originalHeight - delta.y
+          );
+          newPos = setImmutableValue(newPos, "top", newPos.top + delta.y);
+        }
+
+        // Bottom side
+        if (["s", "se", "sw"].includes(key)) {
+          newSize = setImmutableValue(
+            newSize,
+            "height",
+            originalHeight + delta.y
+          );
+        }
+
+        updatePosAndSize(newPos, newSize, minSize, containerSize);
+      }
+    };
+  };
+
+  // Refresh size of model screen resized
+  useEffect(() => {
+    let newPos = { ...position };
+    let newSize = { ...size };
+    updatePosAndSize(newPos, newSize, minSize, containerSize);
+  }, [containerSize.width, containerSize.height]);
+
+  let dragHandleContents = (
+    <>
+      <DragHandle
+        onDrag={makeOnDragReize("e")}
+        classNames={["resize-handle", "resize-handle-e"]}
+      ></DragHandle>
+      <DragHandle
+        onDrag={makeOnDragReize("w")}
+        classNames={["resize-handle", "resize-handle-w"]}
+      ></DragHandle>
+      <DragHandle
+        onDrag={makeOnDragReize("n")}
+        classNames={["resize-handle", "resize-handle-n"]}
+      ></DragHandle>
+      <DragHandle
+        onDrag={makeOnDragReize("s")}
+        classNames={["resize-handle", "resize-handle-s"]}
+      ></DragHandle>
+      <DragHandle
+        onDrag={makeOnDragReize("se")}
+        classNames={["resize-handle-corner", "resize-handle-se"]}
+      ></DragHandle>
+      <DragHandle
+        onDrag={makeOnDragReize("ne")}
+        classNames={["resize-handle-corner", "resize-handle-ne"]}
+      ></DragHandle>
+      <DragHandle
+        onDrag={makeOnDragReize("nw")}
+        classNames={["resize-handle-corner", "resize-handle-nw"]}
+      ></DragHandle>
+      <DragHandle
+        onDrag={makeOnDragReize("sw")}
+        classNames={["resize-handle-corner", "resize-handle-sw"]}
+      ></DragHandle>
+    </>
+  );
+
+  // Define the contents of the UI
+  let headerContents = "";
+  let titleContents = (
+    <DragHandle
+      onDrag={onDrag}
+      classNames={["title", !isDragEnabled ? "not-allowed" : ""]}
+    >
+      {title}
+    </DragHandle>
+  );
+  let leftHeaderActionContents = (
+    <div {...classes("actions", "row")}>
+      <div {...classes("button", "now-allowed")} title="Anchor">
+        <FlareIcon />
+      </div>
+      <div
+        {...classes("button")}
+        onClick={() => toggleDragEnabled()}
+        title={isDragEnabled ? "Disable drag" : "Enable drag"}
+      >
+        {isDragEnabled ? <OpenWithIcon /> : <CloseIcon />}
+      </div>
+    </div>
+  );
+
+  let rightHeaderActionContents = (
+    <div {...classes("actions", "row")}>
+      <div
+        {...classes("button", "now-allowed")}
+        onClick={() => setIsMinimized(!isMinimized)}
+      >
+        <MinimizeIcon />
+      </div>
+      <div
+        {...classes("button", "now-allowed")}
+        onClick={() => setIsFullSize(!isFullSize)}
+        title={isFullSize ? "Restore size" : "Maximize size"}
+      >
+        {isFullSize ? <FullscreenExitIcon /> : <FullscreenIcon />}
+      </div>
+      <div {...classes("button", "now-allowed")} title="Close">
+        <CloseIcon />
+      </div>
+    </div>
+  );
+
+  if (size.width > 300) {
+    headerContents = (
+      <div {...classes("header", "noselect")}>
+        <div {...classes("row")}>
+          {leftHeaderActionContents}
+          {titleContents}
+          {rightHeaderActionContents}
+        </div>
+      </div>
+    );
+  } else {
+    headerContents = (
+      <div {...classes("header", "noselect")}>
+        <div {...classes("row")}>{titleContents}</div>
+        <div {...classes("row")}>
+          {leftHeaderActionContents}
+          <div {...classes("spacer", " button")} />
+          {rightHeaderActionContents}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -118,56 +354,28 @@ function DragWindow(props) {
         position: "absolute",
         ...(isFullSize
           ? { top: "0px", left: "0px" }
-          : { top: newY, left: newX }),
-        ...(isFullSize ? { height: "100%", width: "100%" } : {}),
+          : { top: position.top, left: position.left }),
+        ...(isFullSize
+          ? { height: "100%", width: "100%" }
+          : {
+              height: size.height,
+              width: size.width,
+            }),
       }}
       transition={{ type: "spring", stiffness: 200 }}
-      {...classes("window", "resizable", "blurred_bkgd")}
+      {...classes("window", "blurred_bkgd")}
     >
-      <div {...classes("full_wrapper", "main_bkgd")}>
+      <div {...classes("full_wrapper", "main_bkgd", "relative")}>
         <div {...classes("window-shell", "grow")}>
-          <div {...classes("inner_content", "grow", "column")}>
+          {dragHandleContents}
+          <div {...classes(["inner_content", "grow", "column"])}>
             <FillContainer>
-              <FillHeader>
-                <div {...classes("header", "noselect")}>
-                  <div {...classes("row")}>
-                    <div {...classes("actions", "row")}>
-                      <div {...classes("button", "now-allowed")}>.</div>
-                      <div
-                        {...classes("button")}
-                        onClick={() => toggleDragEnabled()}
-                      >
-                        {isDragEnabled ? <OpenWithIcon /> : <CloseIcon />}
-                      </div>
-                    </div>
-                    <DragHandle
-                      onDrag={onDrag}
-                      {...classes([
-                        "title",
-                        !isDragEnabled ? "not-allowed" : "",
-                      ])}
-                    >
-                      Title {width}x{height}
-                    </DragHandle>
-                    <div {...classes("actions", "row")}>
-                      <div
-                        {...classes("button", "now-allowed")}
-                        onClick={() => setIsFullSize(!isFullSize)}
-                      >
-                        <ZoomOutMapIcon />
-                      </div>
-                      <div {...classes("button", "now-allowed")}>
-                        <CloseIcon />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </FillHeader>
+              <FillHeader>{headerContents}</FillHeader>
 
               <FillContent
                 classNames={["window-content", "tint-bkgd", "column"]}
               >
-                <AdaptiveWithDetector>
+                <AdaptiveComponent>
                   <div {...classes("body", "grow")}>
                     <div {...classes("grow")}>
                       <div {...classes("column")}>
@@ -178,15 +386,23 @@ function DragWindow(props) {
                         </div>
                         <div {...classes("row", "align-left")}>
                           <div {...classes("column")}>
-                            wrapperSize:{" "}
+                            containerSize:{" "}
                             <pre>
-                              <xmp>{JSON.stringify(wrapperSize, null, 2)}</xmp>
+                              <xmp>
+                                {JSON.stringify(containerSize, null, 2)}
+                              </xmp>
                             </pre>
                           </div>
                           <div {...classes("column")}>
                             windowSize:{" "}
                             <pre>
                               <xmp>{JSON.stringify(windowSize, null, 2)}</xmp>
+                            </pre>
+                          </div>
+                          <div {...classes("column")}>
+                            size:{" "}
+                            <pre>
+                              <xmp>{JSON.stringify(size, null, 2)}</xmp>
                             </pre>
                           </div>
                           <div {...classes("column")}>
@@ -199,18 +415,18 @@ function DragWindow(props) {
                       </div>
                     </div>
                   </div>
-                </AdaptiveWithDetector>
+                </AdaptiveComponent>
               </FillContent>
 
-              <FillFooter height={60}>Footer</FillFooter>
+              <FillFooter height={60} classNames={["center-center"]}>
+                Footer
+              </FillFooter>
             </FillContainer>
           </div>
         </div>
       </div>
     </motion.div>
   );
-}
+});
 
-const DragWindowResizeDetector = withResizeDetector(DragWindow);
-
-export default DragWindowResizeDetector;
+export default DragWindow;

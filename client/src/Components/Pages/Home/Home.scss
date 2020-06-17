@@ -165,10 +165,12 @@ body,
 .tinted,
 .tinted-dark {
   background-color: #000000bf;
+  color: white;
 }
 
 .tinted-light {
   background-color: #ffffffbf;
+  color: black;
 }
 
 .app-header {
@@ -369,4 +371,40 @@ $transition: all 150ms linear;
   height: $resizeHandleHeight;
   cursor: nesw-resize;
   transform: translateX(-50%) translateY(50%);
+}
+
+.taskbar {
+  .button {
+    display: flex;
+    height: 100%;
+    width: 150px;
+    max-width: 150px;
+    align-items: center;
+    justify-content: flex-start;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    margin: 0 5px 0 0px;
+    border-left: 0px solid transparent;
+    transition: all 150ms linear;
+    padding-left: 10px;
+    .truncate-inner {
+      display: inline-block;
+      position: relative;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+  }
+  .button:hover,
+  .button.focused:hover,
+  .button.open {
+    background-color: #bbbbbb99;
+  }
+  .button.focused {
+    border-left: 5px solid #09f;
+  }
+  .button.open {
+    background-color: #6b6b6b99;
+  }
 }
