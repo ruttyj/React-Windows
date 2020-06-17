@@ -1,0 +1,21 @@
+{
+  "name": "master",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "installClient": "cd client && npm install",
+    "installServer": "cd server && npm install",
+    "install": "concurrently \"npm run installServer\" \"npm run installClient\"",
+    "startClient": "cd client && npm run start",
+    "startServer": "cd server && npm run start",
+    "start": "concurrently \"npm run startServer\" \"npm run startClient\"",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "kill": "taskkill -F -IM node.exe"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^5.2.0"
+  }
+}

@@ -1,0 +1,39 @@
+.blurred_bkgd {
+  position: relative;
+  overflow: hidden;
+
+  .focus_content {
+    z-index: 3;
+  }
+}
+.blurred_bkgd:before,
+.blurred_bkgd:after {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 2;
+  top: auto;
+  bottom: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body,
+.blurred_bkgd:before,
+.blurred_bkgd:after {
+  background-image: var(--bkgd-image);
+  background-size: cover;
+  background-position: center, center;
+  background-attachment: fixed;
+}
+
+.blurred_bkgd:after {
+  z-index: 2;
+  background-repeat: no-repeat;
+  background-size: cover;
+  -webkit-filter: var(--bkgd-filter);
+  filter: var(--bkgd-filter);
+  backdrop-filter: var(--bkgd-filter);
+}
