@@ -256,3 +256,105 @@ $indicatorColor: #00000050;
   left: 10px;
   position: absolute;
 }
+
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+$resizeHandleWidth: 4px;
+$resizeHandleHeight: 4px;
+$cornerColor: #ff990000;
+$cornerHoverColor: #ff9900;
+$sideColor: #0099ff00;
+$sideHoverColor: #0099ff;
+$transition: all 150ms linear;
+
+.resize-handle {
+  content: "";
+  position: absolute;
+  background-color: $sideColor;
+  transition: $transition;
+}
+.resize-handle:hover {
+  content: "";
+  position: absolute;
+  background-color: $sideHoverColor;
+}
+
+.resize-handle-e {
+  right: 0px;
+  top: 0px;
+  height: 100%;
+  width: $resizeHandleWidth;
+  cursor: ew-resize;
+}
+
+.resize-handle-w {
+  left: 0px;
+  top: 0px;
+  height: 100%;
+  width: $resizeHandleWidth;
+  cursor: ew-resize;
+}
+
+.resize-handle-n {
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: $resizeHandleHeight;
+  cursor: ns-resize;
+}
+
+.resize-handle-s {
+  bottom: 0px;
+  left: 0px;
+  width: 100%;
+  height: $resizeHandleHeight;
+  cursor: ns-resize;
+}
+
+.resize-handle-corner {
+  content: "";
+  position: absolute;
+  background-color: $cornerColor;
+  transition: $transition;
+}
+.resize-handle-corner:hover {
+  background-color: $cornerHoverColor;
+}
+
+.resize-handle-se {
+  bottom: 0px;
+  right: 0px;
+  width: $resizeHandleWidth;
+  height: $resizeHandleHeight;
+  cursor: nwse-resize;
+}
+
+.resize-handle-nw {
+  top: 0px;
+  left: 0px;
+  width: $resizeHandleWidth;
+  height: $resizeHandleHeight;
+  cursor: nwse-resize;
+}
+
+.resize-handle-ne {
+  top: 0px;
+  right: 0px;
+  width: $resizeHandleWidth;
+  height: $resizeHandleHeight;
+  cursor: nesw-resize;
+}
+
+.resize-handle-sw {
+  bottom: 0px;
+  left: 0px;
+  width: $resizeHandleWidth;
+  height: $resizeHandleHeight;
+  cursor: nesw-resize;
+}
