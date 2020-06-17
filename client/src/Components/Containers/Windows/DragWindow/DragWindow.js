@@ -4,9 +4,9 @@ import { motion, useTransform, useMotionValue } from "framer-motion";
 import CloseIcon from "@material-ui/icons/Close";
 import MinimizeIcon from "@material-ui/icons/Minimize";
 import FlareIcon from "@material-ui/icons/Flare";
+import LockIcon from "@material-ui/icons/Lock";
+import LockOpenIcon from "@material-ui/icons/LockOpen";
 import FullscreenIcon from "@material-ui/icons/Fullscreen";
-import FullscreenExitIcon from "@material-ui/icons/FullscreenExit";
-import OpenWithIcon from "@material-ui/icons/OpenWith";
 import FillContainer from "../../../../../src/Components/Containers/FillContainer/FillContainer";
 import FillContent from "../../../../../src/Components/Containers/FillContainer/FillContent";
 import FillHeader from "../../../../../src/Components/Containers/FillContainer/FillHeader";
@@ -288,33 +288,34 @@ const DragWindow = withResizeDetector(function (props) {
   );
   let leftHeaderActionContents = (
     <div {...classes("actions", "row")}>
-      <div {...classes("button", "not-allowed")} title="Anchor">
-        <FlareIcon />
+      <div {...classes("button", "not-allowed")} title="Close">
+        <div {...classes("circle red")} />
       </div>
-      <div
-        {...classes("button")}
-        onClick={() => toggleDragEnabled()}
-        title={isDragEnabled ? "Disable drag" : "Enable drag"}
-      >
-        {isDragEnabled ? <OpenWithIcon /> : <CloseIcon />}
-      </div>
-    </div>
-  );
 
-  let rightHeaderActionContents = (
-    <div {...classes("actions", "row")}>
       <div {...classes("button")} onClick={() => handleOnToggleWindow()}>
-        <MinimizeIcon />
+        <div {...classes("circle yellow")} />
       </div>
       <div
         {...classes("button")}
         onClick={() => setIsFullSize(!isFullSize)}
         title={isFullSize ? "Restore size" : "Maximize size"}
       >
-        {isFullSize ? <FullscreenExitIcon /> : <FullscreenIcon />}
+        <div {...classes("circle green")} />
       </div>
-      <div {...classes("button", "not-allowed")} title="Close">
-        <CloseIcon />
+    </div>
+  );
+
+  let rightHeaderActionContents = (
+    <div {...classes("actions", "row")}>
+      <div
+        {...classes("button")}
+        onClick={() => toggleDragEnabled()}
+        title={isDragEnabled ? "Disable drag" : "Enable drag"}
+      >
+        {isDragEnabled ? <LockOpenIcon /> : <LockIcon />}
+      </div>
+      <div {...classes("button", "not-allowed")} title="Anchor">
+        <FlareIcon />
       </div>
     </div>
   );
@@ -332,12 +333,15 @@ const DragWindow = withResizeDetector(function (props) {
   } else {
     headerContents = (
       <div {...classes("header", "noselect")}>
-        <div {...classes("row")}>{titleContents}</div>
         <div {...classes("row")}>
           {leftHeaderActionContents}
-          <div {...classes("spacer", " button")} />
+          <DragHandle
+            onDrag={onDrag}
+            classNames={["title", !isDragEnabled ? "not-allowed" : ""]}
+          ></DragHandle>
           {rightHeaderActionContents}
         </div>
+        <div {...classes("row")}>{titleContents}</div>
       </div>
     );
   }

@@ -86,3 +86,22 @@ $indicatorOffset: 0px;
   left: 10px;
   position: absolute;
 }
+
+.circle {
+  width: 15px;
+  height: 15px;
+  content: "";
+  border-radius: 100%;
+}
+
+.circle.green {
+  background-color: #03a203;
+}
+
+.circle.yellow {
+  background-color: #f90;
+}
+
+.circle.red {
+  background: #ab0000;
+}
