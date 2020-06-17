@@ -109,12 +109,12 @@ function Home(props) {
                   if (window.isFocused) outterClasses.push("focused");
 
                   return (
-                    <div {...classes("button", outterClasses)} key={window.id}>
-                      <div
-                        {...classes("truncate-inner")}
-                        key={window.id}
-                        onClick={() => toggleWindow(window.id)}
-                      >
+                    <div
+                      {...classes("button", "noselect", outterClasses)}
+                      key={window.id}
+                      onClick={() => toggleWindow(window.id)}
+                    >
+                      <div {...classes("truncate-inner")} key={window.id}>
                         {window.title}
                       </div>
                     </div>

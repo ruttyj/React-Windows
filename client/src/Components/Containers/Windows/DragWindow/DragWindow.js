@@ -22,6 +22,7 @@ const containerStyles = {
   flexGrow: 1,
   alignItems: "center",
   justifyContent: "center",
+  padding: "20px",
 };
 const AdaptiveComponent = withResizeDetector(({ width, height, children }) => {
   const [color, setColor] = useState("#0099ffA0");
@@ -56,7 +57,7 @@ const DragWindow = withResizeDetector(function (props) {
 
   const minSize = {
     height: 100,
-    width: 200,
+    width: 225,
   };
 
   const initialPosition = {
