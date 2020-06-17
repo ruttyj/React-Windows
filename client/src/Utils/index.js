@@ -114,11 +114,20 @@ const deleteNestedValue = function (a, b, c) {
 function setImmutableValue(ref, _path, value) {
   let path = Array.isArray(_path) ? _path : [_path];
   if (path.length > 0) {
-    let sClone = { ...ref };
     let key = path[0];
-    let nextPath = path.slice(1);
-    sClone[key] = setImmutableValue(sClone[key], nextPath, value);
-    return sClone;
+    let sClone;
+    if (isArr(ref)) {
+      key = parseInt(key, 10);
+      sClone = [...ref];
+    } else if (isObj(ref)) {
+      sClone = { ...ref };
+    }
+    if (isDef(sClone)) {
+      let nextPath = path.slice(1);
+      sClone[key] = setImmutableValue(sClone[key], nextPath, value);
+      return sClone;
+    }
+    return ref;
   } else {
     return value;
   }

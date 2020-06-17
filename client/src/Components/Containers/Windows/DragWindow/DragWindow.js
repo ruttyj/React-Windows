@@ -18,8 +18,8 @@ const { getNestedValue, classes, setImmutableValue } = Utils;
 // Small component to change the background color based on size
 const containerStyles = {
   width: "100%",
-  height: "100%",
   display: "flex",
+  flexGrow: 1,
   alignItems: "center",
   justifyContent: "center",
 };
@@ -40,23 +40,19 @@ const AdaptiveComponent = withResizeDetector(({ width, height, children }) => {
         ...containerStyles,
       }}
     >
-      <div>{`(${width} x ${height})`}</div>
       <div> {children}</div>
     </div>
   );
 });
 
 const DragWindow = withResizeDetector(function (props) {
+  let { onToggleWindow: handleOnToggleWindow } = props;
   let { width: observedWidth, height: observedHeight } = props;
   let { title = "Untitled", containerSize } = props;
   const borderSize = 1;
-  const windowSize = {
-    width: Math.ceil(parseFloat(observedWidth)) + 2 * borderSize,
-    height: Math.ceil(parseFloat(observedHeight)) + 2 * borderSize,
-  };
+
   const [isDragEnabled, setDragEnabled] = useState(true);
   const [isFullSize, setIsFullSize] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
 
   const minSize = {
     height: 100,
@@ -291,7 +287,7 @@ const DragWindow = withResizeDetector(function (props) {
   );
   let leftHeaderActionContents = (
     <div {...classes("actions", "row")}>
-      <div {...classes("button", "now-allowed")} title="Anchor">
+      <div {...classes("button", "not-allowed")} title="Anchor">
         <FlareIcon />
       </div>
       <div
@@ -306,20 +302,17 @@ const DragWindow = withResizeDetector(function (props) {
 
   let rightHeaderActionContents = (
     <div {...classes("actions", "row")}>
-      <div
-        {...classes("button", "now-allowed")}
-        onClick={() => setIsMinimized(!isMinimized)}
-      >
+      <div {...classes("button")} onClick={() => handleOnToggleWindow()}>
         <MinimizeIcon />
       </div>
       <div
-        {...classes("button", "now-allowed")}
+        {...classes("button")}
         onClick={() => setIsFullSize(!isFullSize)}
         title={isFullSize ? "Restore size" : "Maximize size"}
       >
         {isFullSize ? <FullscreenExitIcon /> : <FullscreenIcon />}
       </div>
-      <div {...classes("button", "now-allowed")} title="Close">
+      <div {...classes("button", "not-allowed")} title="Close">
         <CloseIcon />
       </div>
     </div>
@@ -350,6 +343,9 @@ const DragWindow = withResizeDetector(function (props) {
 
   return (
     <motion.div
+      exit={{ opacity: 0, y: 100, transition: "linear" }}
+      initial={{ opacity: 0, y: 100 }}
+      animate={{ opacity: 1, y: 0, transition: "linear" }}
       style={{
         position: "absolute",
         ...(isFullSize
@@ -379,24 +375,13 @@ const DragWindow = withResizeDetector(function (props) {
                   <div {...classes("body", "grow")}>
                     <div {...classes("grow")}>
                       <div {...classes("column")}>
-                        <div {...classes("row")}>
-                          {isDragEnabled
-                            ? "Dragging enabled"
-                            : "Dragging disabled"}
-                        </div>
-                        <div {...classes("row", "align-left")}>
+                        <div {...classes("row", "wrap", "align-left")}>
                           <div {...classes("column")}>
-                            containerSize:{" "}
+                            container:{" "}
                             <pre>
                               <xmp>
                                 {JSON.stringify(containerSize, null, 2)}
                               </xmp>
-                            </pre>
-                          </div>
-                          <div {...classes("column")}>
-                            windowSize:{" "}
-                            <pre>
-                              <xmp>{JSON.stringify(windowSize, null, 2)}</xmp>
                             </pre>
                           </div>
                           <div {...classes("column")}>
@@ -418,8 +403,14 @@ const DragWindow = withResizeDetector(function (props) {
                 </AdaptiveComponent>
               </FillContent>
 
-              <FillFooter height={60} classNames={["center-center"]}>
-                Footer
+              <FillFooter
+                height={40}
+                classNames={["footer", "actions", "center-center"]}
+              >
+                <div {...classes("spacer")} />
+                <div {...classes("button", "not-allowed")}>Cancel</div>
+
+                <div {...classes("button", "not-allowed")}>Confirm</div>
               </FillFooter>
             </FillContainer>
           </div>

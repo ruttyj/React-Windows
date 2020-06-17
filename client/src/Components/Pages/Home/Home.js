@@ -4,7 +4,12 @@ import classNames from "classname";
 import Utils from "./Utils";
 import SizeTaddleTail from "../../SizeTaddleTail";
 import SideBar from "../../SideBar/";
-import { motion, useTransform, useMotionValue } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useTransform,
+  useMotionValue,
+} from "framer-motion";
 import CloseIcon from "@material-ui/icons/Close";
 import MinimizeIcon from "@material-ui/icons/Minimize";
 import ChatBubbleIcon from "@material-ui/icons/ChatBubble";
@@ -49,6 +54,22 @@ function Home(props) {
       isFocused: true,
     },
   ]);
+
+  const toggleWindow = (id) => {
+    let foundIndex = windows.findIndex((w) => w.id === id);
+    if (foundIndex > -1) {
+      let newValue = windows;
+
+      let isOpen = getNestedValue(newValue, [foundIndex, "isOpen"], false);
+      newValue = setImmutableValue(newValue, [foundIndex, "isOpen"], !isOpen);
+      newValue = setImmutableValue(
+        newValue,
+        [foundIndex, "isFocused"],
+        !isOpen
+      );
+      setWindows(newValue);
+    }
+  };
   return (
     <div {...classes("full", "row", "main_bkgd")}>
       <AppSideBar></AppSideBar>
@@ -61,13 +82,18 @@ function Home(props) {
             children={({ containerSize }) => (
               <>
                 {windows.map((window) => {
-                  return (
-                    <DragWindow
-                      key={window.id}
-                      title={window.title}
-                      containerSize={containerSize}
-                    />
-                  );
+                  let contents = "";
+                  if (window.isOpen) {
+                    contents = (
+                      <DragWindow
+                        key={window.id}
+                        onToggleWindow={() => toggleWindow(window.id)}
+                        title={window.title}
+                        containerSize={containerSize}
+                      />
+                    );
+                  }
+                  return <AnimatePresence>{contents}</AnimatePresence>;
                 })}
               </>
             )}
@@ -84,7 +110,11 @@ function Home(props) {
 
                   return (
                     <div {...classes("button", outterClasses)} key={window.id}>
-                      <div {...classes("truncate-inner")} key={window.id}>
+                      <div
+                        {...classes("truncate-inner")}
+                        key={window.id}
+                        onClick={() => toggleWindow(window.id)}
+                      >
                         {window.title}
                       </div>
                     </div>
