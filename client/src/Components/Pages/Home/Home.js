@@ -59,7 +59,7 @@ const AdaptiveComponent = withResizeDetector(({ width, height, children }) => {
       {...classes(["column"])}
       style={{ backgroundColor: color, ...containerStyles }}
     >
-      <div>{`${width}x${height}`}</div>
+      <div>{`(${width} x ${height})`}</div>
       <div> {children}</div>
     </div>
   );
@@ -76,21 +76,32 @@ const DragWindow = withResizeDetector(function (props) {
   const [isFullSize, setIsFullSize] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 
+  const minSize = {
+    height: 100,
+    width: 300,
+  };
+
+  const initialPosition = {
+    top: 0,
+    left: 0,
+  };
+
+  const initialSize = {
+    height: 600,
+    width: 600,
+  };
   const initialWidth = 600;
   const initialHeight = 400;
 
   const [size, setSize] = useState({
-    width: initialWidth,
-    height: initialHeight,
+    width: initialSize.width,
+    height: initialSize.height,
   });
 
   useEffect(() => {
-    setSize({
-      width: els(initialWidth, 100),
-      height: els(initialHeight, 100),
-    });
+    setSize(initialSize);
   }, []);
-  const [position, setPosition] = useState({});
+  const [position, setPosition] = useState(initialPosition);
   const toggleDragEnabled = () => {
     console.log("toggle");
     setDragEnabled(!isDragEnabled);
@@ -105,6 +116,48 @@ const DragWindow = withResizeDetector(function (props) {
     if (newY.get() !== 0) newY.set(0);
   }
 
+  // Dont allow to resize outside of bounds
+  function restrictAxis(pos, posField, size, sizeField, minSize, wrapperSize) {
+    // Limit drag position
+    if (pos[posField] < 0) pos[posField] = 0;
+
+    if (wrapperSize[sizeField] < size[sizeField])
+      size[sizeField] = wrapperSize[sizeField];
+
+    let limitBounds;
+    let difference;
+    limitBounds = pos[posField] + size[sizeField];
+    if (limitBounds > wrapperSize[sizeField]) {
+      if (pos[posField] > 0) {
+        difference = limitBounds - wrapperSize[sizeField];
+        if (difference < pos[posField]) {
+          pos[posField] -= difference;
+        } else {
+          pos[posField] = 0;
+        }
+      } else {
+        limitBounds = pos[posField] + size[sizeField];
+        difference = limitBounds - wrapperSize[sizeField];
+        if (difference > 0) {
+          size[sizeField] = wrapperSize[sizeField];
+        }
+      }
+    }
+
+    if (size[sizeField] < minSize[sizeField])
+      size[sizeField] = minSize[sizeField];
+  }
+
+  // Side effect: will mutate the input values
+  const updatePosAndSize = (newPos, newSize, minSize, wrapperSize) => {
+    restrictAxis(newPos, "top", newSize, "height", minSize, wrapperSize);
+    restrictAxis(newPos, "left", newSize, "width", minSize, wrapperSize);
+    handleY.set(newPos.top);
+    handleX.set(newPos.left);
+    setPosition(newPos);
+    setSize(newSize);
+  };
+
   const onDrag = (e, info) => {
     if (isDragEnabled) {
       if (isFullSize) {
@@ -113,23 +166,17 @@ const DragWindow = withResizeDetector(function (props) {
 
       let delta = info.delta;
       if (delta.x !== 0 || delta.y !== 0) {
-        const posY = clamp(
-          0,
-          handleY.get() + delta.y,
-          wrapperSize.height - observedHeight
-        );
-        const posX = clamp(
-          0,
-          handleX.get() + delta.x,
-          wrapperSize.width - observedWidth
-        );
-
-        handleY.set(posY);
-        handleX.set(posX);
-        setPosition({
+        const posY = handleY.get() + delta.y;
+        const posX = handleX.get() + delta.x;
+        const newPos = {
           left: posX,
           top: posY,
-        });
+        };
+        const newSize = {
+          width: size.width,
+          height: size.height,
+        };
+        updatePosAndSize(newPos, newSize, minSize, wrapperSize);
       }
     }
   };
@@ -197,41 +244,18 @@ const DragWindow = withResizeDetector(function (props) {
           );
         }
 
-        // Limit drag position
-        if (newPos.top < 0) newPos.top = 0;
-        if (newPos.left < 0) newPos.left = 0;
-
-        // Dont allow to resize outside of bounds
-        function restrictAxis(pos, posField, size, sizeField, wrapperSize) {
-          let limitBounds;
-          let difference;
-          limitBounds = pos[posField] + size[sizeField];
-          if (limitBounds > wrapperSize[sizeField]) {
-            if (pos[posField] > 0) {
-              difference = limitBounds - wrapperSize[sizeField];
-              if (difference < pos[posField]) {
-                pos[posField] -= difference;
-              } else {
-                pos[posField] = 0;
-              }
-            } else {
-              limitBounds = pos[posField] + size[sizeField];
-              difference = limitBounds - wrapperSize[sizeField];
-              if (difference > 0) {
-                size[sizeField] = wrapperSize[sizeField];
-              }
-            }
-          }
-        }
-
-        restrictAxis(newPos, "top", newSize, "height", wrapperSize);
-        restrictAxis(newPos, "left", newSize, "width", wrapperSize);
-
-        setSize(newSize);
-        setPosition(newPos);
+        updatePosAndSize(newPos, newSize, minSize, wrapperSize);
       }
     };
   };
+
+  useEffect(() => {
+    console.log("useEffect");
+    let newPos = { ...position };
+    let newSize = { ...size };
+    console.log({ newPos, newSize, minSize, wrapperSize });
+    updatePosAndSize(newPos, newSize, minSize, wrapperSize);
+  }, [wrapperSize.width, wrapperSize.height]);
 
   return (
     <motion.div
@@ -290,12 +314,13 @@ const DragWindow = withResizeDetector(function (props) {
                 <div {...classes("header", "noselect")}>
                   <div {...classes("row")}>
                     <div {...classes("actions", "row")}>
-                      <div {...classes("button", "now-allowed")}>
+                      <div {...classes("button", "now-allowed")} title="Anchor">
                         <FlareIcon />
                       </div>
                       <div
                         {...classes("button")}
                         onClick={() => toggleDragEnabled()}
+                        title={isDragEnabled ? "Disable drag" : "Enable drag"}
                       >
                         {isDragEnabled ? <OpenWithIcon /> : <CloseIcon />}
                       </div>
@@ -307,7 +332,9 @@ const DragWindow = withResizeDetector(function (props) {
                         !isDragEnabled ? "not-allowed" : "",
                       ]}
                     >
-                      Title {observedWidth}x{observedHeight}
+                      Title ({observedWidth}
+                      {" x "}
+                      {observedHeight})
                     </DragHandle>
                     <div {...classes("actions", "row")}>
                       <div
@@ -319,6 +346,7 @@ const DragWindow = withResizeDetector(function (props) {
                       <div
                         {...classes("button", "now-allowed")}
                         onClick={() => setIsFullSize(!isFullSize)}
+                        title={isFullSize ? "Restore size" : "Maximize size"}
                       >
                         {isFullSize ? (
                           <FullscreenExitIcon />
@@ -326,7 +354,7 @@ const DragWindow = withResizeDetector(function (props) {
                           <FullscreenIcon />
                         )}
                       </div>
-                      <div {...classes("button", "now-allowed")}>
+                      <div {...classes("button", "now-allowed")} title="Close">
                         <CloseIcon />
                       </div>
                     </div>
@@ -390,7 +418,6 @@ const DragWindow = withResizeDetector(function (props) {
 });
 
 function WindowArea(props) {
-  const [isDragEnabled, setDragEnabled] = useState(true);
   const { width, height } = props;
   const size = { width, height };
   return (
@@ -418,10 +445,12 @@ function Home(props) {
         <FillContent>
           <WindowAreaResizeDetector />
         </FillContent>
-        <FillFooter>
+        <FillFooter height={40}>
           <div {...classes("full")}>
             <BlurredWrapper>
-              <div {...classes("full", "tinted-light")}>Cart</div>
+              <div {...classes("full", "tinted-light", "center-center")}>
+                Footer
+              </div>
             </BlurredWrapper>
           </div>
         </FillFooter>
