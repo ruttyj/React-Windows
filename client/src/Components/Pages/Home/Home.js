@@ -1,51 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { withResizeDetector } from "react-resize-detector";
-import classNames from "classname";
 import Utils from "./Utils";
-import SizeTaddleTail from "../../SizeTaddleTail";
-import SideBar from "../../SideBar/";
-import {
-  motion,
-  AnimatePresence,
-  useTransform,
-  useMotionValue,
-} from "framer-motion";
-import CloseIcon from "@material-ui/icons/Close";
-import MinimizeIcon from "@material-ui/icons/Minimize";
-import ChatBubbleIcon from "@material-ui/icons/ChatBubble";
-import BugReportIcon from "@material-ui/icons/BugReport";
-import PeopleIcon from "@material-ui/icons/People";
-import HomeIcon from "@material-ui/icons/Home";
-import MenuIcon from "@material-ui/icons/Menu";
-import ExitToAppIcon from "@material-ui/icons/ExitToApp";
-import FlareIcon from "@material-ui/icons/Flare";
-import FullscreenIcon from "@material-ui/icons/Fullscreen";
-import FullscreenExitIcon from "@material-ui/icons/FullscreenExit";
-import OpenWithIcon from "@material-ui/icons/OpenWith";
+import { AnimatePresence } from "framer-motion";
 import FillContainer from "../../Containers/FillContainer/FillContainer";
 import FillContent from "../../Containers/FillContainer/FillContent";
 import FillHeader from "../../Containers/FillContainer/FillHeader";
 import FillFooter from "../../Containers/FillContainer/FillFooter";
-import RelLayer from "../../Layers/RelLayer";
-import AbsLayer from "../../Layers/AbsLayer";
-import config from "../../../config";
-import DragHandle from "../../../Components/Functional/DragHandle/";
 import DragWindow from "../../../Components/Containers/Windows/DragWindow/";
 import WindowContainer from "../../../Components/Containers/Windows/WindowContainer/";
+import SizeBackgroundColor from "../../../Components/Containers/SizeBackgroundColor/";
+import DragListV from "../../../Components/Containers/DragListV/";
 import StateBuffer from "../../../Utils/StateBuffer";
-
+import BlurredWrapper from "../../Containers/BlurredWrapper/";
+import AppSidebar from "../../../Components/TopLevel/AppSizebar/";
+import AppHeader from "../../../Components/TopLevel/AppHeader/";
 import "./Home.scss";
-const {
-  els,
-  getNestedValue,
-  isFunc,
-  isDef,
-  isArr,
-  isStr,
-  clamp,
-  classes,
-  setImmutableValue,
-} = Utils;
+
+const { getNestedValue, classes, setImmutableValue } = Utils;
 const initialState = {
   windows: [
     {
@@ -71,26 +41,6 @@ function Home(props) {
   const [isLeftSnapIndicator, setIsLeftSnapIndicator] = useState(false);
   const [_state, _setState] = useState(initialState);
   state.setSetter(_setState);
-
-  const [windows, setWindows] = useState([
-    {
-      id: 1,
-      title: "Window A",
-      isOpen: true,
-      isFocused: true,
-      anchor: "nw",
-      isDragDisabled: false,
-      isFullSize: false,
-      position: {
-        left: 600,
-        top: 50,
-      },
-      size: {
-        width: 700,
-        height: 700,
-      },
-    },
-  ]);
 
   const windowMethods = {
     setPosition(id, position) {
@@ -148,7 +98,7 @@ function Home(props) {
 
   return (
     <div {...classes("full", "row", "main_bkgd")}>
-      <AppSideBar></AppSideBar>
+      <AppSidebar></AppSidebar>
       <FillContainer>
         <FillHeader>
           <AppHeader />
@@ -186,6 +136,47 @@ function Home(props) {
                         onToggleWindow={() => toggleWindow(window.id)}
                         title={window.title}
                         containerSize={containerSize}
+                        children={({ size, position, containerSize }) => (
+                          <SizeBackgroundColor>
+                            <div {...classes("body", "grow")}>
+                              <div {...classes("grow")}>
+                                <div {...classes("column")}>
+                                  <div {...classes("row", "wrap")}>
+                                    <div {...classes("column", "align-left")}>
+                                      container:{" "}
+                                      <pre>
+                                        <xmp>
+                                          {JSON.stringify(
+                                            containerSize,
+                                            null,
+                                            2
+                                          )}
+                                        </xmp>
+                                      </pre>
+                                    </div>
+                                    <div {...classes("column", "align-left")}>
+                                      size:{" "}
+                                      <pre>
+                                        <xmp>
+                                          {JSON.stringify(size, null, 2)}
+                                        </xmp>
+                                      </pre>
+                                    </div>
+                                    <div {...classes("column", "align-left")}>
+                                      position:
+                                      <pre>
+                                        <xmp>
+                                          {JSON.stringify(position, null, 2)}
+                                        </xmp>
+                                      </pre>
+                                    </div>
+                                  </div>
+                                  <DragListV></DragListV>
+                                </div>
+                              </div>
+                            </div>
+                          </SizeBackgroundColor>
+                        )}
                       />
                     );
                   }
@@ -222,86 +213,6 @@ function Home(props) {
         </FillFooter>
       </FillContainer>
     </div>
-  );
-}
-
-function AppHeader(props) {
-  return (
-    <div {...classes("app-header")}>
-      <BlurredWrapper>
-        <div
-          {...classes(
-            "full",
-            "tinted-light",
-            "space-between",
-            "v-align-center"
-          )}
-        >
-          <ToolbarButton>R</ToolbarButton>
-          <ToolbarButton>C</ToolbarButton>
-          <ToolbarButton>L</ToolbarButton>
-        </div>
-      </BlurredWrapper>
-    </div>
-  );
-}
-
-function ToolbarButton(props = {}) {
-  const { classNames = [], style = {}, children } = props;
-  return (
-    <div
-      {...classes("flex", "center-center", classNames)}
-      style={{ width: "75px", height: "75px", ...style }}
-    >
-      {children}
-    </div>
-  );
-}
-
-function BlurredWrapper(props) {
-  const { children, className } = props;
-  return (
-    <div {...classes("full", "blurred_bkgd", className)}>
-      <div {...classes("full", "focus_content", "full")}>
-        <div {...classes("full")}>{children}</div>
-      </div>
-    </div>
-  );
-}
-
-function AppSideBar(props) {
-  const { children } = props;
-  return (
-    <SideBar>
-      <BlurredWrapper {...classes("full")}>
-        <div
-          {...classes("full", "column", "noselect", "focus_content", "tinted")}
-        >
-          <div {...classes("button")}>
-            <MenuIcon />
-          </div>
-
-          <div {...classes("button")}>
-            <ExitToAppIcon style={{ transform: "scaleX(-1)" }} />
-          </div>
-
-          <div {...classes("button")}>
-            <HomeIcon />
-          </div>
-          <div {...classes("button")}>
-            <PeopleIcon />
-          </div>
-          <div {...classes("button")}>
-            <ChatBubbleIcon />
-          </div>
-          <div {...classes("button")}>
-            <BugReportIcon />
-          </div>
-        </div>
-
-        {children}
-      </BlurredWrapper>
-    </SideBar>
   );
 }
 

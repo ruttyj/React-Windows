@@ -12,50 +12,18 @@ import FillContent from "../../../../../src/Components/Containers/FillContainer/
 import FillHeader from "../../../../../src/Components/Containers/FillContainer/FillHeader";
 import FillFooter from "../../../../../src/Components/Containers/FillContainer/FillFooter";
 import DragHandle from "../../../../../src/Components/Functional/DragHandle/";
-import Utils from "../../../../../src/Utils";
+import Utils from "../../../../../src/Utils/";
 import DragListV from "../../../../../src/Components/Containers/DragListV";
-
+import SizeBackgroundColor from "../../../../../src/Components/Containers/SizeBackgroundColor/";
 const { getNestedValue, classes, setImmutableValue, isFunc } = Utils;
 
 /*
  * Please excuse the mess
  */
 
-// Small component to change the background color based on size
-const containerStyles = {
-  width: "100%",
-  display: "flex",
-  flexGrow: 1,
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "20px",
-};
-const SizeBackgroundColor = withResizeDetector(
-  ({ width, height, children }) => {
-    const [color, setColor] = useState("#0099ffA0");
-    useEffect(() => {
-      setColor(
-        width > 500 ? "#0099ffA0" : width > 300 ? "#00bb00A0" : "#ff9900A0"
-      );
-    }, [width]);
-
-    return (
-      <div
-        {...classes(["column"])}
-        style={{
-          transition: "all 150ms linear",
-          backgroundColor: color,
-          ...containerStyles,
-        }}
-      >
-        <div> {children}</div>
-      </div>
-    );
-  }
-);
-
 const DragWindow = withResizeDetector(function (props) {
   let ef = () => {}; // empty function
+  let { children } = props;
   let { onToggleWindow: handleOnToggleWindow } = props;
   let { onSnapEnter = ef, onSnapLeave = ef, onSnapRelease = ef } = props; // enter: "enter snap range", leave: "leave snap range", release: "release after being involved with a snap zone"
   let { width: observedWidth, height: observedHeight } = props;
@@ -115,9 +83,6 @@ const DragWindow = withResizeDetector(function (props) {
   const handlePosLeft = useMotionValue(initialPosition.left);
   const newPosLeft = useTransform(handlePosLeft, (v) => v);
   const newPosTop = useTransform(handlePosTop, (v) => v);
-
-  const newSizeWidth = useTransform(handleSizeWidth, (v) => v);
-  const newSizeHeight = useTransform(handleSizeHeight, (v) => v);
 
   if (isFullSize) {
     if (newPosLeft.get() !== 0) newPosLeft.set(0);
@@ -415,39 +380,13 @@ const DragWindow = withResizeDetector(function (props) {
               <FillContent
                 classNames={["window-content", "tint-bkgd", "column"]}
               >
-                <SizeBackgroundColor>
-                  <div {...classes("body", "grow")}>
-                    <div {...classes("grow")}>
-                      <div {...classes("column")}>
-                        <div {...classes("row", "wrap")}>
-                          <div {...classes("column", "align-left")}>
-                            container:{" "}
-                            <pre>
-                              <xmp>
-                                {JSON.stringify(containerSize, null, 2)}
-                              </xmp>
-                            </pre>
-                          </div>
-                          <div {...classes("column", "align-left")}>
-                            size:{" "}
-                            <pre>
-                              <xmp>{JSON.stringify(getSize(), null, 2)}</xmp>
-                            </pre>
-                          </div>
-                          <div {...classes("column", "align-left")}>
-                            position:
-                            <pre>
-                              <xmp>
-                                {JSON.stringify(getPosition(), null, 2)}
-                              </xmp>
-                            </pre>
-                          </div>
-                        </div>
-                        <DragListV></DragListV>
-                      </div>
-                    </div>
-                  </div>
-                </SizeBackgroundColor>
+                {isFunc(children)
+                  ? children({
+                      containerSize,
+                      size: getSize(),
+                      position: getPosition(),
+                    })
+                  : children}
               </FillContent>
 
               <FillFooter
