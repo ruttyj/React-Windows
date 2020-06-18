@@ -28,29 +28,28 @@ function AppSideBar(props) {
         <div
           {...classes("full", "column", "noselect", "focus_content", "tinted")}
         >
-          <div {...classes("button")}>
+          <div {...classes("button", "not-allowed")}>
             <MenuIcon />
           </div>
 
-          <div {...classes("button")}>
+          <div {...classes("button", "not-allowed")}>
             <ExitToAppIcon style={{ transform: "scaleX(-1)" }} />
           </div>
 
-          <div {...classes("button")}>
+          <div {...classes("button", "not-allowed")}>
             <HomeIcon />
           </div>
-          <div {...classes("button")}>
+          <div {...classes("button", "not-allowed")}>
             <PeopleIcon />
           </div>
-          <div {...classes("button")}>
+          <div {...classes("button", "not-allowed")}>
             <ChatBubbleIcon />
           </div>
-          <div {...classes("button")}>
+          <div {...classes("button", "not-allowed")}>
             <BugReportIcon />
           </div>
+          {children}
         </div>
-
-        {children}
       </BlurredWrapper>
     </SideBar>
   );

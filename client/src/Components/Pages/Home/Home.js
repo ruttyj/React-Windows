@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Utils from "./Utils";
 import { AnimatePresence } from "framer-motion";
+import AddIcon from "@material-ui/icons/Add";
 import FillContainer from "../../Containers/FillContainer/FillContainer";
 import FillContent from "../../Containers/FillContainer/FillContent";
 import FillHeader from "../../Containers/FillContainer/FillHeader";
@@ -19,7 +20,8 @@ import "./Home.scss";
 const { els, isDef, getNestedValue, classes, setImmutableValue } = Utils;
 let topWindowId = 0;
 function MakeWindow(props) {
-  const { children, title } = props;
+  const { children } = props;
+  let { key, title } = props;
 
   let {
     isOpen = false,
@@ -28,10 +30,17 @@ function MakeWindow(props) {
     isDragDisabled = false,
     isResizing = false,
     isResizeDisabled = false,
+    position = null,
+    size = null,
   } = props;
 
+  let id = ++topWindowId;
+
+  key = els(key, "#${id}");
+
   return {
-    id: ++topWindowId,
+    id,
+    key,
     title: els(title, `Window #${topWindowId}`),
     isOpen,
     isFocused,
@@ -166,17 +175,53 @@ const initialState = {
 
 const state = StateBuffer(initialState);
 
-state.push("windows", MakeWindow({}));
+state.push(
+  "windows",
+  MakeWindow({
+    isOpen: true,
+    title: "Drag and Drop Grids",
+    children(props) {
+      const { size, position } = props;
+      //const {state} = props;
+      //@TODO const state.set("")
+
+      return (
+        <iframe
+          {...classes(["full"])}
+          style={{
+            "background-color": "white",
+          }}
+          src={`https://csb-7svhq-7wti992fk.vercel.app/`}
+        />
+      );
+    },
+  })
+);
 
 function Home(props) {
   const [isLeftSnapIndicator, setIsLeftSnapIndicator] = useState(false);
   const [_state, _setState] = useState(initialState);
   state.setSetter(_setState);
 
-  const windowMethods = {
+  const windowMethods = {};
+  Object.assign(windowMethods, {
+    get(id) {
+      const foundIndex = state
+        .get("windows", [])
+        .findIndex((w) => isDef(w.id) && w.id === id);
+      return state.get(["windows", foundIndex], null);
+    },
+    getKey(key) {
+      const foundIndex = state
+        .get("windows", [])
+        .findIndex((w) => isDef(w.key) && w.key === key);
+      return state.get(["windows", foundIndex], null);
+    },
     setPosition(id, position) {
       let newValue = state.get("windows", []);
-      let foundIndex = state.get("windows", []).findIndex((w) => w.id === id);
+      const foundIndex = state
+        .get("windows", [])
+        .findIndex((w) => isDef(w.id) && w.id === id);
       if (foundIndex > -1) {
         newValue = setImmutableValue(newValue, [foundIndex, "position"], {
           ...position,
@@ -186,7 +231,7 @@ function Home(props) {
     },
     setSize(id, size) {
       let newValue = state.get("windows", []);
-      let foundIndex = newValue.findIndex((w) => w.id === id);
+      const foundIndex = newValue.findIndex((w) => isDef(w.id) && w.id === id);
       if (foundIndex > -1) {
         newValue = setImmutableValue(newValue, [foundIndex, "size"], {
           ...size,
@@ -196,7 +241,7 @@ function Home(props) {
     },
     setState(id, newState) {
       let newValue = state.get("windows", []);
-      let foundIndex = newValue.findIndex((w) => w.id === id);
+      const foundIndex = newValue.findIndex((w) => isDef(w.id) && w.id === id);
       if (foundIndex > -1) {
         newValue = setImmutableValue(newValue, foundIndex, { ...newState });
         state.set("windows", newValue);
@@ -216,7 +261,7 @@ function Home(props) {
       });
       state.set("windows", newValue);
     },
-  };
+  });
 
   const toggleWindow = (id) => {
     let newValue = state.get("windows", []);
@@ -224,11 +269,9 @@ function Home(props) {
     if (foundIndex > -1) {
       let isOpen = getNestedValue(newValue, [foundIndex, "isOpen"], false);
       newValue = setImmutableValue(newValue, [foundIndex, "isOpen"], !isOpen);
-      newValue = setImmutableValue(
-        newValue,
-        [foundIndex, "isFocused"],
-        !isOpen
-      );
+      newValue = setImmutableValue(newValue, [foundIndex, "isFocused"], true);
+
+      windowMethods.setFocused(id, true);
       state.set("windows", newValue);
     }
   };
@@ -243,7 +286,11 @@ function Home(props) {
 
   return (
     <div {...classes("full", "row", "main_bkgd")}>
-      <AppSidebar></AppSidebar>
+      <AppSidebar>
+        <div {...classes("button", "not-allowed")}>
+          <AddIcon />
+        </div>
+      </AppSidebar>
       <FillContainer>
         <FillHeader>
           <AppHeader />

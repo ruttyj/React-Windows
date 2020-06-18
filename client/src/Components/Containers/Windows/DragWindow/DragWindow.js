@@ -192,19 +192,31 @@ const DragWindow = withResizeDetector(function(props) {
     onSet("isDragging", true);
   };
 
-  const onResizeDown = () => {
+  const assign = (valueToSet) => {
     let newValue = { ...window };
-    newValue.isDragging = true;
+    Object.assign(newValue, valueToSet);
+    onSet([], newValue);
+  };
+
+  const onResizeDown = () => {
+    let valueToSet = {};
+    valueToSet.isDragging = true;
     if (!isResizeDisabled) {
-      newValue.isResizing = true;
+      valueToSet.isResizing = true;
     }
+
+    let newValue = { ...window };
+    Object.assign(newValue, valueToSet);
     onSet([], newValue);
   };
 
   const onUp = (e, info) => {
+    let valueToSet = {};
+    valueToSet.isDragging = false;
+    valueToSet.isResizing = false;
+
     let newValue = { ...window };
-    newValue.isDragging = false;
-    newValue.isResizing = false;
+    Object.assign(newValue, valueToSet);
     onSet([], newValue);
   };
 
@@ -286,6 +298,7 @@ const DragWindow = withResizeDetector(function(props) {
     updatePosAndSize(newPos, newSize, getMinSize(), containerSize);
   }, [containerSize.width, containerSize.height]);
 
+  // Drag handles
   let dragHandleContents = (
     <>
       <DragHandle

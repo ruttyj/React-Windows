@@ -12,7 +12,7 @@ function clamp(min, value, max) {
   return Math.min(Math.max(min, value), max);
 }
 
-const getNestedValue = function (reference, path, fallback = undefined) {
+const getNestedValue = function(reference, path, fallback = undefined) {
   path = isArr(path) ? path : [path];
 
   var pointer = reference;
@@ -37,7 +37,7 @@ const getNestedValue = function (reference, path, fallback = undefined) {
   return pointer;
 };
 
-const setNestedValue = function (a, b, c, d) {
+const setNestedValue = function(a, b, c, d) {
   var setter, startingRef, tempPath, value;
   if (typeof a === "function") {
     // Use a custom setter
@@ -78,11 +78,11 @@ const setNestedValue = function (a, b, c, d) {
   }
 };
 
-const isDefNested = function (reference, path) {
+const isDefNested = function(reference, path) {
   return isDef(getNestedValue(reference, path, undefined));
 };
 
-const deleteNestedValue = function (a, b, c) {
+const deleteNestedValue = function(a, b, c) {
   var deleter;
   var startingRef;
   var tempPath;
@@ -163,8 +163,9 @@ export default {
   classes,
   getNestedValue,
   setNestedValue,
-  deleteNestedValue,
   isDefNested,
+  //@TODO checkNested(ref, [path], op, value)
+  deleteNestedValue,
   setImmutableValue,
   deleteNestedValue,
 };

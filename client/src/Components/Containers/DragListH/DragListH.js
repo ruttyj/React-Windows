@@ -3,7 +3,9 @@ import { useEffect, useState, useRef } from "react";
 import { motion, useMotionValue } from "framer-motion";
 import { findIndex, Position } from "./find-index";
 import move from "array-move";
+import Utils from "../../../Utils/";
 import "./DragListH.scss";
+const { isDef, isFunc, isArr, els, classes } = Utils;
 
 const DragListHItem = ({ style = {}, setPosition, moveItem, i }) => {
   const [isDragging, setDragging] = useState(false);
@@ -91,7 +93,7 @@ const DragListH = () => {
   };
 
   return (
-    <ul className={"drag-list-h"}>
+    <ul {...classes("drag-list", "drag-list-h")}>
       {colors.map((color, i) => (
         <DragListHItem
           key={color}
