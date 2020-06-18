@@ -13,9 +13,7 @@ import FillHeader from "../../../../../src/Components/Containers/FillContainer/F
 import FillFooter from "../../../../../src/Components/Containers/FillContainer/FillFooter";
 import DragHandle from "../../../../../src/Components/Functional/DragHandle/";
 import Utils from "../../../../../src/Utils";
-
-import DragListV from "../../../../../src/Components/Containers/DragListV";
-
+import "./SizeBackgroundColor";
 const { getNestedValue, classes, setImmutableValue } = Utils;
 
 // Small component to change the background color based on size
@@ -66,16 +64,16 @@ const DragWindow = withResizeDetector(function (props) {
   };
 
   const initialPosition = {
-    top: 0,
-    left: 0,
+    top: 125,
+    left: 491,
   };
 
+  const initialWidth = 900;
+  const initialHeight = 600;
   const initialSize = {
-    height: 600,
-    width: 600,
+    height: initialHeight,
+    width: initialWidth,
   };
-  const initialWidth = 600;
-  const initialHeight = 400;
 
   const [size, setSize] = useState({
     width: initialSize.width,
@@ -90,8 +88,8 @@ const DragWindow = withResizeDetector(function (props) {
     setDragEnabled(!isDragEnabled);
   };
 
-  const handleY = useMotionValue(0);
-  const handleX = useMotionValue(0);
+  const handleY = useMotionValue(initialPosition.top);
+  const handleX = useMotionValue(initialPosition.left);
   const newX = useTransform(handleX, (v) => v);
   const newY = useTransform(handleY, (v) => v);
   if (isFullSize) {
@@ -407,7 +405,6 @@ const DragWindow = withResizeDetector(function (props) {
                             </pre>
                           </div>
                         </div>
-                        <DragListV></DragListV>
                       </div>
                     </div>
                   </div>
