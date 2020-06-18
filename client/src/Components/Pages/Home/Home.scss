@@ -48,11 +48,31 @@ body,
 
 .footer.actions {
   margin-top: 4px;
+  .button {
+    border-radius: 5px;
+    outline: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    transform: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* border: 1px solid black; */
+    font-weight: bold;
+    font-size: 12px;
+    color: black;
+    background: linear-gradient(45deg, #dedede 30%, #ffffff 90%);
+    transform: scale(0.95);
+    -webkit-box-shadow: -2px 3px 8px 1px rgba(0, 0, 0, 0.19);
+    -moz-box-shadow: -2px 3px 8px 1px rgba(0, 0, 0, 0.19);
+    box-shadow: -2px 3px 8px 1px rgba(0, 0, 0, 0.19);
+  }
+  .button:hover {
+    transform: scale(1);
+    color: black;
+  }
 }
 
-.footer.actions .button {
-  padding: 8px 16px;
-}
 .footer.actions .button:not(:last-child) {
   margin-right: 4px;
 }
@@ -133,6 +153,7 @@ body,
 
 .blurred_bkgd {
   position: relative;
+  overflow: hidden;
   .focus_content {
     z-index: 3;
   }

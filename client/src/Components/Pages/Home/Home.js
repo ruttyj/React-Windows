@@ -32,6 +32,8 @@ import config from "../../../config";
 import DragHandle from "../../../Components/Functional/DragHandle/";
 import DragWindow from "../../../Components/Containers/Windows/DragWindow/";
 import WindowContainer from "../../../Components/Containers/Windows/WindowContainer/";
+import StateBuffer from "../../../Utils/StateBuffer";
+
 import "./Home.scss";
 const {
   els,
@@ -44,22 +46,87 @@ const {
   classes,
   setImmutableValue,
 } = Utils;
+const initialState = {
+  windows: [
+    {
+      id: 1,
+      title: "Window A",
+      isOpen: true,
+      isFocused: true,
+      anchor: "nw",
+      position: {
+        left: 600,
+        top: 50,
+      },
+      size: {
+        width: 700,
+        height: 700,
+      },
+    },
+  ],
+};
 
+const state = StateBuffer(initialState);
 function Home(props) {
+  const [isLeftSnapIndicator, setIsLeftSnapIndicator] = useState(false);
+  const [_state, _setState] = useState(initialState);
+  state.setSetter(_setState);
+
   const [windows, setWindows] = useState([
     {
       id: 1,
       title: "Window A",
       isOpen: true,
       isFocused: true,
+      anchor: "nw",
+      isDragDisabled: false,
+      isFullSize: false,
+      position: {
+        left: 600,
+        top: 50,
+      },
+      size: {
+        width: 700,
+        height: 700,
+      },
     },
   ]);
 
-  const toggleWindow = (id) => {
-    let foundIndex = windows.findIndex((w) => w.id === id);
-    if (foundIndex > -1) {
-      let newValue = windows;
+  const windowMethods = {
+    setPosition(id, position) {
+      let newValue = state.get("windows", []);
+      let foundIndex = state.get("windows", []).findIndex((w) => w.id === id);
+      if (foundIndex > -1) {
+        newValue = setImmutableValue(newValue, [foundIndex, "position"], {
+          ...position,
+        });
+        state.set("windows", newValue);
+      }
+    },
+    setSize(id, size) {
+      let newValue = state.get("windows", []);
+      let foundIndex = newValue.findIndex((w) => w.id === id);
+      if (foundIndex > -1) {
+        newValue = setImmutableValue(newValue, [foundIndex, "size"], {
+          ...size,
+        });
+        state.set("windows", newValue);
+      }
+    },
+    setState(id, newState) {
+      let newValue = state.get("windows", []);
+      let foundIndex = newValue.findIndex((w) => w.id === id);
+      if (foundIndex > -1) {
+        newValue = setImmutableValue(newValue, foundIndex, { ...newState });
+        state.set("windows", newValue);
+      }
+    },
+  };
 
+  const toggleWindow = (id) => {
+    let newValue = state.get("windows", []);
+    let foundIndex = newValue.findIndex((w) => w.id === id);
+    if (foundIndex > -1) {
       let isOpen = getNestedValue(newValue, [foundIndex, "isOpen"], false);
       newValue = setImmutableValue(newValue, [foundIndex, "isOpen"], !isOpen);
       newValue = setImmutableValue(
@@ -67,9 +134,18 @@ function Home(props) {
         [foundIndex, "isFocused"],
         !isOpen
       );
-      setWindows(newValue);
+      state.set("windows", newValue);
     }
   };
+
+  const onSnapEnter = (window, key = "w") => {
+    if (!isLeftSnapIndicator) setIsLeftSnapIndicator(true);
+  };
+
+  const onSnapLeave = (window, key = "w") => {
+    if (isLeftSnapIndicator) setIsLeftSnapIndicator(false);
+  };
+
   return (
     <div {...classes("full", "row", "main_bkgd")}>
       <AppSideBar></AppSideBar>
@@ -79,14 +155,34 @@ function Home(props) {
         </FillHeader>
         <FillContent>
           <WindowContainer
+            dump={state.get("windows", [])}
+            leftIndicator={isLeftSnapIndicator}
             children={({ containerSize }) => (
               <>
-                {windows.map((window) => {
+                {state.get("windows", []).map((window) => {
                   let contents = "";
                   if (window.isOpen) {
                     contents = (
                       <DragWindow
                         key={window.id}
+                        window={window}
+                        onSet={(path, value) =>
+                          windowMethods.setState(
+                            window.id,
+                            setImmutableValue(window, path, value)
+                          )
+                        }
+                        onSetState={(...args) =>
+                          windowMethods.setState(window.id, ...args)
+                        }
+                        onSetSize={(...args) =>
+                          windowMethods.setSize(window.id, ...args)
+                        }
+                        onSetPosition={(...args) => {
+                          windowMethods.setPosition(window.id, ...args);
+                        }}
+                        onSnapEnter={onSnapEnter}
+                        onSnapLeave={onSnapLeave}
                         onToggleWindow={() => toggleWindow(window.id)}
                         title={window.title}
                         containerSize={containerSize}
@@ -103,7 +199,7 @@ function Home(props) {
           <div {...classes("full")}>
             <BlurredWrapper>
               <div {...classes("taskbar", "full", "tinted-dark")}>
-                {windows.map((window) => {
+                {state.get("windows", []).map((window) => {
                   let outterClasses = [];
                   if (window.isOpen) outterClasses.push("open");
                   if (window.isFocused) outterClasses.push("focused");

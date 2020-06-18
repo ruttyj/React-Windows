@@ -13,10 +13,13 @@ import FillHeader from "../../../../../src/Components/Containers/FillContainer/F
 import FillFooter from "../../../../../src/Components/Containers/FillContainer/FillFooter";
 import DragHandle from "../../../../../src/Components/Functional/DragHandle/";
 import Utils from "../../../../../src/Utils";
-
 import DragListV from "../../../../../src/Components/Containers/DragListV";
 
-const { getNestedValue, classes, setImmutableValue } = Utils;
+const { getNestedValue, classes, setImmutableValue, isFunc } = Utils;
+
+/*
+ * Please excuse the mess
+ */
 
 // Small component to change the background color based on size
 const containerStyles = {
@@ -52,13 +55,23 @@ const SizeBackgroundColor = withResizeDetector(
 );
 
 const DragWindow = withResizeDetector(function (props) {
+  let ef = () => {}; // empty function
   let { onToggleWindow: handleOnToggleWindow } = props;
+  let { onSnapEnter = ef, onSnapLeave = ef, onSnapRelease = ef } = props; // enter: "enter snap range", leave: "leave snap range", release: "release after being involved with a snap zone"
   let { width: observedWidth, height: observedHeight } = props;
-  let { title = "Untitled", containerSize } = props;
+  let { window = {}, title = "Untitled", containerSize } = props;
+  let { onSet, onSetState, onSetSize, onSetPosition } = props;
   const borderSize = 1;
 
-  const [isDragEnabled, setDragEnabled] = useState(true);
-  const [isFullSize, setIsFullSize] = useState(false);
+  const isFullSize = getNestedValue(window, "isFullSize", false);
+  const setFullSize = (value) => {
+    onSet("isFullSize", value);
+  };
+
+  const isDragDisabled = getNestedValue(window, "isDragDisabled", false);
+  const setDragDisabled = (value) => {
+    onSet("isDragDisabled", value);
+  };
 
   const minSize = {
     height: 100,
@@ -66,28 +79,36 @@ const DragWindow = withResizeDetector(function (props) {
   };
 
   const initialPosition = {
-    top: 0,
-    left: 0,
+    top: window.position.top,
+    left: window.position.left,
   };
 
   const initialSize = {
-    height: 600,
-    width: 600,
+    height: window.size.height,
+    width: window.size.width,
   };
-  const initialWidth = 600;
-  const initialHeight = 400;
 
-  const [size, setSize] = useState({
-    width: initialSize.width,
-    height: initialSize.height,
-  });
+  const getSize = () => {
+    return {
+      height: window.size.height,
+      width: window.size.width,
+    };
+  };
+  const getPosition = () => {
+    return {
+      left: window.position.left,
+      top: window.position.top,
+    };
+  };
 
   useEffect(() => {
-    setSize(initialSize);
+    setPosition(initialPosition);
+    onSetSize(initialSize);
+    onSetPosition(initialPosition);
   }, []);
   const [position, setPosition] = useState(initialPosition);
   const toggleDragEnabled = () => {
-    setDragEnabled(!isDragEnabled);
+    setDragDisabled(!isDragDisabled);
   };
 
   const handleY = useMotionValue(0);
@@ -97,6 +118,10 @@ const DragWindow = withResizeDetector(function (props) {
   if (isFullSize) {
     if (newX.get() !== 0) newX.set(0);
     if (newY.get() !== 0) newY.set(0);
+    onSetPosition({
+      top: newY.get(),
+      left: newX.get(),
+    });
   }
 
   // Dont allow to resize outside of bounds
@@ -145,13 +170,21 @@ const DragWindow = withResizeDetector(function (props) {
     handleY.set(newPos.top);
     handleX.set(newPos.left);
     setPosition(newPos);
-    setSize(newSize);
+
+    onSetPosition(newPos);
+    onSetSize(newSize);
+
+    if (newPos.left < 4) {
+      if (isFunc(onSnapEnter)) onSnapEnter(window, "w");
+    } else {
+      if (isFunc(onSnapLeave)) onSnapLeave(window, "w");
+    }
   };
 
   const onDrag = (e, info) => {
-    if (isDragEnabled) {
+    if (!isDragDisabled) {
       if (isFullSize) {
-        setIsFullSize(false);
+        setFullSize(false);
       }
 
       let delta = info.delta;
@@ -162,10 +195,7 @@ const DragWindow = withResizeDetector(function (props) {
           left: posX,
           top: posY,
         };
-        const newSize = {
-          width: size.width,
-          height: size.height,
-        };
+        const newSize = getSize();
         updatePosAndSize(newPos, newSize, minSize, containerSize);
       }
     }
@@ -175,14 +205,15 @@ const DragWindow = withResizeDetector(function (props) {
   const makeOnDragReize = (key) => {
     return function (e, info) {
       let delta = info.delta;
+      const size = getSize();
       if (delta.x !== 0 || delta.y !== 0) {
         let originalWidth = getNestedValue(size, "width", null);
-        if (Number.isNaN(originalWidth)) originalWidth = initialWidth;
+        if (Number.isNaN(originalWidth)) originalWidth = initialSize.width;
 
         let originalHeight = getNestedValue(size, "height", null);
-        if (Number.isNaN(originalHeight)) originalHeight = initialHeight;
+        if (Number.isNaN(originalHeight)) originalHeight = initialSize.height;
 
-        let newPos = position;
+        let newPos = getPosition();
 
         // Make sure values are defined
         let newSize = size;
@@ -210,7 +241,6 @@ const DragWindow = withResizeDetector(function (props) {
             originalWidth - delta.x
           );
           newPos = setImmutableValue(newPos, "left", newPos.left + delta.x);
-          console.log("newPos", newPos);
         }
 
         // Top side
@@ -239,8 +269,8 @@ const DragWindow = withResizeDetector(function (props) {
 
   // Refresh size of model screen resized
   useEffect(() => {
-    let newPos = { ...position };
-    let newSize = { ...size };
+    let newPos = { ...getPosition() };
+    let newSize = { ...getSize() };
     updatePosAndSize(newPos, newSize, minSize, containerSize);
   }, [containerSize.width, containerSize.height]);
 
@@ -286,7 +316,7 @@ const DragWindow = withResizeDetector(function (props) {
   let titleContents = (
     <DragHandle
       onDrag={onDrag}
-      classNames={["title", !isDragEnabled ? "not-allowed" : ""]}
+      classNames={["title", isDragDisabled ? "not-allowed" : ""]}
     >
       {title}
     </DragHandle>
@@ -302,7 +332,7 @@ const DragWindow = withResizeDetector(function (props) {
       </div>
       <div
         {...classes("button")}
-        onClick={() => setIsFullSize(!isFullSize)}
+        onClick={() => setFullSize(!isFullSize)}
         title={isFullSize ? "Restore size" : "Maximize size"}
       >
         <div {...classes("circle green")} />
@@ -315,9 +345,9 @@ const DragWindow = withResizeDetector(function (props) {
       <div
         {...classes("button")}
         onClick={() => toggleDragEnabled()}
-        title={isDragEnabled ? "Disable drag" : "Enable drag"}
+        title={!isDragDisabled ? "Disable drag" : "Enable drag"}
       >
-        {isDragEnabled ? <LockOpenIcon /> : <LockIcon />}
+        {!isDragDisabled ? <LockOpenIcon /> : <LockIcon />}
       </div>
       <div {...classes("button", "not-allowed")} title="Anchor">
         <FlareIcon />
@@ -325,6 +355,7 @@ const DragWindow = withResizeDetector(function (props) {
     </div>
   );
 
+  const size = getSize();
   if (size.width > 300) {
     headerContents = (
       <div {...classes("header", "noselect")}>
@@ -342,7 +373,7 @@ const DragWindow = withResizeDetector(function (props) {
           {leftHeaderActionContents}
           <DragHandle
             onDrag={onDrag}
-            classNames={["title", !isDragEnabled ? "not-allowed" : ""]}
+            classNames={["title", isDragDisabled ? "not-allowed" : ""]}
           ></DragHandle>
           {rightHeaderActionContents}
         </div>
@@ -358,15 +389,8 @@ const DragWindow = withResizeDetector(function (props) {
       animate={{ opacity: 1, y: 0, transition: "linear" }}
       style={{
         position: "absolute",
-        ...(isFullSize
-          ? { top: "0px", left: "0px" }
-          : { top: position.top, left: position.left }),
-        ...(isFullSize
-          ? { height: "100%", width: "100%" }
-          : {
-              height: size.height,
-              width: size.width,
-            }),
+        ...(isFullSize ? { top: "0px", left: "0px" } : getPosition()),
+        ...(isFullSize ? { height: "100%", width: "100%" } : getSize()),
       }}
       transition={{ type: "spring", stiffness: 200 }}
       {...classes("window", "blurred_bkgd")}
@@ -385,8 +409,8 @@ const DragWindow = withResizeDetector(function (props) {
                   <div {...classes("body", "grow")}>
                     <div {...classes("grow")}>
                       <div {...classes("column")}>
-                        <div {...classes("row", "wrap", "align-left")}>
-                          <div {...classes("column")}>
+                        <div {...classes("row", "wrap")}>
+                          <div {...classes("column", "align-left")}>
                             container:{" "}
                             <pre>
                               <xmp>
@@ -394,16 +418,18 @@ const DragWindow = withResizeDetector(function (props) {
                               </xmp>
                             </pre>
                           </div>
-                          <div {...classes("column")}>
+                          <div {...classes("column", "align-left")}>
                             size:{" "}
                             <pre>
-                              <xmp>{JSON.stringify(size, null, 2)}</xmp>
+                              <xmp>{JSON.stringify(getSize(), null, 2)}</xmp>
                             </pre>
                           </div>
-                          <div {...classes("column")}>
+                          <div {...classes("column", "align-left")}>
                             position:
                             <pre>
-                              <xmp>{JSON.stringify(position, null, 2)}</xmp>
+                              <xmp>
+                                {JSON.stringify(getPosition(), null, 2)}
+                              </xmp>
                             </pre>
                           </div>
                         </div>
