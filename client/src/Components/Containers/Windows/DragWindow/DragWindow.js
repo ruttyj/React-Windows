@@ -503,7 +503,9 @@ const DragWindow = withResizeDetector(function(props) {
                   "window-content",
                   "tint-bkgd",
                   "column",
-                  isMouseEventsDisabled ? "disable-pointer-events" : "",
+                  isMouseEventsDisabled || !isFocused
+                    ? "disable-pointer-events"
+                    : "",
                 ]}
               >
                 {childContents}
