@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Utils from "../../../Utils";
 import { motion } from "framer-motion";
+import { useMouseUp, useTouchEnd } from "../../../Utils/useWindowEvents";
 
 const { classes } = Utils;
 
@@ -10,6 +11,7 @@ function DragHandle(props) {
   const { onDrag = ef, onDown = ef, onUp = ef } = props;
 
   const [isActive, setIsActive] = useState(false);
+  const [isDown, setDown] = useState(false);
 
   const setActive = () => {
     setIsActive(true);
@@ -18,15 +20,29 @@ function DragHandle(props) {
     setIsActive(false);
   };
 
+  const handleOnDown = () => {
+    setDown(true);
+    onDown();
+  };
+
+  useMouseUp(() => {
+    if (isDown) {
+      onUp();
+    }
+  });
+  useTouchEnd(() => {
+    if (isDown) {
+      onUp();
+    }
+  });
+
   return (
     <motion.div
       {...props}
       {...classes("noselect", classNames, isActive ? "active" : "")}
       onPan={onDrag}
-      onMouseDown={onDown}
-      onTouchStart={onDown}
-      onMouseUp={onUp}
-      onTouchEnd={onUp}
+      onMouseDown={handleOnDown}
+      onTouchStart={handleOnDown}
       onMouseEnter={setActive}
       onMouseLeave={setInactive}
       onTapStart={setActive}
