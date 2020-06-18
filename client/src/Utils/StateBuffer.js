@@ -25,7 +25,7 @@ export default function StateBuffer(_initialState = {}) {
 
   let mSetter = null;
   let mMutator = (v) => v;
-  const _flush = debounce(async function () {
+  const _flush = debounce(async function() {
     flush(mSetter);
   }, 1);
 
@@ -57,6 +57,17 @@ export default function StateBuffer(_initialState = {}) {
       parseFloat(get(path, 0)) - value
     );
     _flush();
+  }
+
+  function push(path = [], value = undefined) {
+    if (value !== undefined) {
+      let pointer = getNestedValue(mCurrentState, path, undefined);
+      if (isArr(pointer)) {
+        pointer.push(value);
+      }
+    } else {
+      // You mean delete right, or keep same value?????
+    }
   }
 
   function forEach(path = [], fn = identity) {
@@ -136,14 +147,27 @@ export default function StateBuffer(_initialState = {}) {
   }
 
   const publicScope = {
+    // check wither value exists or matches some condition
     is,
+
+    // If is boolean, toggle value
+    // @TODO If array item toggle it's existance
+    // @TODO If object - undefined
+    toggle,
+
+    // If the path points top a number, manipulate in some way
     inc,
     dec,
     get,
     set,
+
+    // if path points to array, push value
+    push,
+
+    // For each value at the path do something
     map,
     forEach,
-    toggle,
+
     flush,
     getState,
     setSetter,

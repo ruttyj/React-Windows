@@ -16,9 +16,42 @@ import AppSidebar from "../../../Components/TopLevel/AppSizebar/";
 import AppHeader from "../../../Components/TopLevel/AppHeader/";
 import "./Home.scss";
 
-const { isDef, getNestedValue, classes, setImmutableValue } = Utils;
-
+const { els, isDef, getNestedValue, classes, setImmutableValue } = Utils;
 let topWindowId = 0;
+function MakeWindow(props) {
+  const { children, title } = props;
+
+  let {
+    isOpen = false,
+    isFocused = false,
+    isDragging = false,
+    isDragDisabled = false,
+    isResizing = false,
+    isResizeDisabled = false,
+  } = props;
+
+  return {
+    id: ++topWindowId,
+    title: els(title, `Window #${topWindowId}`),
+    isOpen,
+    isFocused,
+    isDragging: false,
+    isDragDisabled: false,
+    isResizing: false,
+    isResizeDisabled: false,
+    anchor: "nw",
+    position: {
+      left: 0,
+      top: 0,
+    },
+    size: {
+      width: 700,
+      height: 700,
+    },
+    children: children,
+  };
+}
+
 const initialState = {
   windows: [
     {
@@ -29,7 +62,7 @@ const initialState = {
       isDragging: false,
       isDragDisabled: false,
       isResizing: false,
-      isResizingDisabled: false,
+      isResizeDisabled: false,
       anchor: "nw",
       position: {
         left: 300,
@@ -44,22 +77,16 @@ const initialState = {
           <div {...classes("body", "grow")}>
             <div {...classes("grow")}>
               <div {...classes("column")}>
-                <div {...classes("row", "wrap")}>
-                  <div {...classes("column", "align-left")}>
-                    container:{" "}
-                    <pre>
-                      <xmp>{JSON.stringify(containerSize, null, 2)}</xmp>
-                    </pre>
-                  </div>
+                <div {...classes("row")}>
                   <div {...classes("column", "align-left")}>
                     size:{" "}
-                    <pre>
+                    <pre style={{ padding: "100px" }}>
                       <xmp>{JSON.stringify(size, null, 2)}</xmp>
                     </pre>
                   </div>
                   <div {...classes("column", "align-left")}>
                     position:
-                    <pre>
+                    <pre style={{ padding: "100px" }}>
                       <xmp>{JSON.stringify(position, null, 2)}</xmp>
                     </pre>
                   </div>
@@ -90,7 +117,7 @@ const initialState = {
       isDragging: false,
       isDragDisabled: false,
       isResizing: false,
-      isResizingDisabled: false,
+      isResizeDisabled: false,
       anchor: "nw",
       position: {
         left: 1000,
@@ -115,7 +142,7 @@ const initialState = {
       isDragging: false,
       isDragDisabled: false,
       isResizing: false,
-      isResizingDisabled: false,
+      isResizeDisabled: false,
       anchor: "nw",
       position: {
         left: 1000,
@@ -138,6 +165,9 @@ const initialState = {
 };
 
 const state = StateBuffer(initialState);
+
+state.push("windows", MakeWindow({}));
+
 function Home(props) {
   const [isLeftSnapIndicator, setIsLeftSnapIndicator] = useState(false);
   const [_state, _setState] = useState(initialState);
