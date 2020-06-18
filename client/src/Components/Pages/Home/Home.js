@@ -107,7 +107,7 @@ const initialState = {
     {
       id: ++topWindowId,
       title: "Window A",
-      isOpen: true,
+      isOpen: false,
       isFocused: true,
       isDragging: false,
       isDragDisabled: false,
@@ -194,7 +194,7 @@ const state = StateBuffer(initialState);
 state.push(
   "windows",
   MakeWindow({
-    isOpen: true,
+    isOpen: false,
     title: "Drag and Drop Grids - IFrame",
     children(props) {
       const { size, position } = props;
@@ -276,6 +276,7 @@ function Home(props) {
         }
       });
       state.set("windows", newValue);
+      return newValue;
     },
   });
 
@@ -283,11 +284,12 @@ function Home(props) {
     let newValue = state.get("windows", []);
     let foundIndex = newValue.findIndex((w) => w.id === id);
     if (foundIndex > -1) {
-      let isOpen = getNestedValue(newValue, [foundIndex, "isOpen"], false);
-      newValue = setImmutableValue(newValue, [foundIndex, "isOpen"], !isOpen);
-      newValue = setImmutableValue(newValue, [foundIndex, "isFocused"], true);
+      const wasOpen = getNestedValue(newValue, [foundIndex, "isOpen"], false);
+      let isOpen = !wasOpen;
+      newValue = windowMethods.setFocused(id, isOpen);
+      newValue = setImmutableValue(newValue, [foundIndex, "isOpen"], isOpen);
+      newValue = setImmutableValue(newValue, [foundIndex, "isFocused"], isOpen);
 
-      windowMethods.setFocused(id, true);
       state.set("windows", newValue);
     }
   };
