@@ -65,6 +65,16 @@ const initialState = {
           </div>
         </SizeBackgroundColor>
       ),
+      actions: () => (
+        <FillFooter
+          height={40}
+          classNames={["footer", "actions", "center-center"]}
+        >
+          <div {...classes("spacer")} />
+          <div {...classes("button", "not-allowed")}>Cancel</div>
+          <div {...classes("button", "not-allowed")}>Confirm</div>
+        </FillFooter>
+      ),
     },
     {
       id: ++topWindowId,
@@ -205,7 +215,6 @@ function Home(props) {
                   if (window.isOpen) {
                     contents = (
                       <DragWindow
-                        key={window.id}
                         window={window}
                         onSet={(path, value) =>
                           windowMethods.setState(
@@ -231,10 +240,15 @@ function Home(props) {
                         title={window.title}
                         containerSize={containerSize}
                         children={window.children}
+                        actions={window.actions}
                       />
                     );
                   }
-                  return <AnimatePresence>{contents}</AnimatePresence>;
+                  return (
+                    <AnimatePresence key={window.id}>
+                      {contents}
+                    </AnimatePresence>
+                  );
                 })}
               </>
             )}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { withResizeDetector } from "react-resize-detector";
+import useConstant from "use-constant";
 import { motion, useTransform, useMotionValue } from "framer-motion";
+import { withResizeDetector } from "react-resize-detector";
 import CloseIcon from "@material-ui/icons/Close";
 import MinimizeIcon from "@material-ui/icons/Minimize";
 import FlareIcon from "@material-ui/icons/Flare";
@@ -10,12 +11,12 @@ import FullscreenIcon from "@material-ui/icons/Fullscreen";
 import FillContainer from "../../../../../src/Components/Containers/FillContainer/FillContainer";
 import FillContent from "../../../../../src/Components/Containers/FillContainer/FillContent";
 import FillHeader from "../../../../../src/Components/Containers/FillContainer/FillHeader";
-import FillFooter from "../../../../../src/Components/Containers/FillContainer/FillFooter";
 import DragHandle from "../../../../../src/Components/Functional/DragHandle/";
 import Utils from "../../../../../src/Utils/";
 import DragListV from "../../../../../src/Components/Containers/DragListV";
 import SizeBackgroundColor from "../../../../../src/Components/Containers/SizeBackgroundColor/";
-const { getNestedValue, classes, setImmutableValue, isFunc } = Utils;
+import "./DragWindow.scss";
+const { getNestedValue, classes, setImmutableValue, isFunc, isDef } = Utils;
 
 /*
  * Please excuse the mess
@@ -23,7 +24,7 @@ const { getNestedValue, classes, setImmutableValue, isFunc } = Utils;
 
 const DragWindow = withResizeDetector(function (props) {
   let ef = () => {}; // empty function
-  let { children } = props;
+  let { children, actions } = props;
   let { onToggleWindow: handleOnToggleWindow } = props;
   let { onSnapEnter = ef, onSnapLeave = ef, onSnapRelease = ef } = props; // enter: "enter snap range", leave: "leave snap range", release: "release after being involved with a snap zone"
   let { width: observedWidth, height: observedHeight } = props;
@@ -44,6 +45,12 @@ const DragWindow = withResizeDetector(function (props) {
   const isDragDisabled = getNestedValue(window, "isDragDisabled", false);
   const setDragDisabled = (value) => {
     onSet("isDragDisabled", value);
+  };
+
+  const isDragging = getNestedValue(window, "isDragging", false);
+  let isMouseEventsDisabled = isDragging;
+  const setIsDragging = function (value) {
+    onSet("isDragging", Boolean(value));
   };
 
   const _minSize = {
@@ -179,6 +186,14 @@ const DragWindow = withResizeDetector(function (props) {
     }
   };
 
+  const onDown = () => {
+    setIsDragging(true);
+  };
+
+  const onUp = (e, info) => {
+    setIsDragging(false);
+  };
+
   // Resize window
   const makeOnDragReize = (key) => {
     return function (e, info) {
@@ -259,48 +274,72 @@ const DragWindow = withResizeDetector(function (props) {
     <>
       <DragHandle
         onDrag={makeOnDragReize("e")}
+        onDown={onDown}
+        onUp={onUp}
         classNames={["resize-handle", "resize-handle-e"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("w")}
+        onDown={onDown}
+        onUp={onUp}
         classNames={["resize-handle", "resize-handle-w"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("n")}
+        onDown={onDown}
+        onUp={onUp}
         classNames={["resize-handle", "resize-handle-n"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("s")}
+        onDown={onDown}
+        onUp={onUp}
         classNames={["resize-handle", "resize-handle-s"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("se")}
+        onDown={onDown}
+        onUp={onUp}
         classNames={["resize-handle-corner", "resize-handle-se"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("ne")}
+        onDown={onDown}
+        onUp={onUp}
         classNames={["resize-handle-corner", "resize-handle-ne"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("nw")}
+        onDown={onDown}
+        onUp={onUp}
         classNames={["resize-handle-corner", "resize-handle-nw"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("sw")}
+        onDown={onDown}
+        onUp={onUp}
         classNames={["resize-handle-corner", "resize-handle-sw"]}
       ></DragHandle>
     </>
   );
+
+  const childArgs = {
+    containerSize,
+    size: getSize(),
+    position: getPosition(),
+  };
 
   // Define the contents of the UI
   let headerContents = "";
   let titleContents = (
     <DragHandle
       onDrag={onDrag}
+      onDown={onDown}
+      onUp={onUp}
       onClick={() => onSetFocus()}
       classNames={["title", isDragDisabled ? "not-allowed" : ""]}
     >
-      {title}
+      {isDef(title) ? (isFunc(title) ? title(childArgs) : title) : ""}
     </DragHandle>
   );
   let leftHeaderActionContents = (
@@ -355,6 +394,8 @@ const DragWindow = withResizeDetector(function (props) {
           {leftHeaderActionContents}
           <DragHandle
             onDrag={onDrag}
+            onDown={onDown}
+            onUp={onUp}
             onClick={() => onSetFocus()}
             classNames={["title", isDragDisabled ? "not-allowed" : ""]}
           ></DragHandle>
@@ -387,26 +428,25 @@ const DragWindow = withResizeDetector(function (props) {
               <FillHeader>{headerContents}</FillHeader>
 
               <FillContent
-                classNames={["window-content", "tint-bkgd", "column"]}
+                classNames={[
+                  "window-content",
+                  "tint-bkgd",
+                  "column",
+                  isMouseEventsDisabled ? "disable-pointer-events" : "",
+                ]}
               >
-                {isFunc(children)
-                  ? children({
-                      containerSize,
-                      size: getSize(),
-                      position: getPosition(),
-                    })
-                  : children}
+                {isDef(children)
+                  ? isFunc(children)
+                    ? children(childArgs)
+                    : children
+                  : ""}
               </FillContent>
 
-              <FillFooter
-                height={40}
-                classNames={["footer", "actions", "center-center"]}
-              >
-                <div {...classes("spacer")} />
-                <div {...classes("button", "not-allowed")}>Cancel</div>
-
-                <div {...classes("button", "not-allowed")}>Confirm</div>
-              </FillFooter>
+              {isDef(actions)
+                ? isFunc(actions)
+                  ? actions(childArgs)
+                  : actions
+                : ""}
             </FillContainer>
           </div>
         </div>
