@@ -453,6 +453,16 @@ const DragWindow = withResizeDetector(function(props) {
     );
   }
 
+  let childContents = "";
+  if (isDef(children)) {
+    if (isFunc(children)) {
+      let Child = children;
+      childContents = <Child {...childArgs} />;
+    } else {
+      childContents = children;
+    }
+  }
+
   return (
     <motion.div
       exit={{ opacity: 0, y: 100, transition: "linear" }}
@@ -482,11 +492,7 @@ const DragWindow = withResizeDetector(function(props) {
                   isMouseEventsDisabled ? "disable-pointer-events" : "",
                 ]}
               >
-                {isDef(children)
-                  ? isFunc(children)
-                    ? children(childArgs)
-                    : children
-                  : ""}
+                {childContents}
               </FillContent>
 
               {isDef(actions)

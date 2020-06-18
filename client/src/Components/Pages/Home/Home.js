@@ -10,7 +10,7 @@ import DragWindow from "../../../Components/Containers/Windows/DragWindow/";
 import WindowContainer from "../../../Components/Containers/Windows/WindowContainer/";
 import SizeBackgroundColor from "../../../Components/Containers/SizeBackgroundColor/";
 import DragListV from "../../../Components/Containers/DragListV/";
-import DragListH from "../../../Components/Containers/DragListH/";
+import DragListH, { sample } from "../../../Components/Containers/DragListH/";
 import StateBuffer from "../../../Utils/StateBuffer";
 import BlurredWrapper from "../../Containers/BlurredWrapper/";
 import AppSidebar from "../../../Components/TopLevel/AppSizebar/";
@@ -35,9 +35,7 @@ function MakeWindow(props) {
   } = props;
 
   let id = ++topWindowId;
-
   key = els(key, "#${id}");
-
   return {
     id,
     key,
@@ -61,6 +59,49 @@ function MakeWindow(props) {
   };
 }
 
+function WindowAComponent(props) {
+  const { size, position, containerSize } = props;
+  let horizontalItems = {
+    0: <div>item 0</div>,
+    1: <div>item 1</div>,
+    2: <div>item 2</div>,
+  };
+
+  let _horizontalOrder = [0, 1, 2];
+  const [horizontalOrder, setHorizontalOrder] = useState(_horizontalOrder);
+
+  return (
+    <SizeBackgroundColor>
+      <div {...classes("body", "grow")}>
+        <div {...classes("grow")}>
+          <div {...classes("column")}>
+            <div {...classes("row")}>
+              <div {...classes("column", "align-left")}>
+                size:{" "}
+                <pre style={{ padding: "100px" }}>
+                  <xmp>{JSON.stringify(size, null, 2)}</xmp>
+                </pre>
+              </div>
+              <div {...classes("column", "align-left")}>
+                position:
+                <pre style={{ padding: "100px" }}>
+                  <xmp>{JSON.stringify(position, null, 2)}</xmp>
+                </pre>
+              </div>
+            </div>
+            <DragListH
+              items={horizontalItems}
+              order={horizontalOrder}
+              setOrder={setHorizontalOrder}
+            />
+            <DragListV></DragListV>
+          </div>
+        </div>
+      </div>
+    </SizeBackgroundColor>
+  );
+}
+
 const initialState = {
   windows: [
     {
@@ -81,32 +122,7 @@ const initialState = {
         width: 700,
         height: 700,
       },
-      children: ({ size, position, containerSize }) => (
-        <SizeBackgroundColor>
-          <div {...classes("body", "grow")}>
-            <div {...classes("grow")}>
-              <div {...classes("column")}>
-                <div {...classes("row")}>
-                  <div {...classes("column", "align-left")}>
-                    size:{" "}
-                    <pre style={{ padding: "100px" }}>
-                      <xmp>{JSON.stringify(size, null, 2)}</xmp>
-                    </pre>
-                  </div>
-                  <div {...classes("column", "align-left")}>
-                    position:
-                    <pre style={{ padding: "100px" }}>
-                      <xmp>{JSON.stringify(position, null, 2)}</xmp>
-                    </pre>
-                  </div>
-                </div>
-                <DragListH></DragListH>
-                <DragListV></DragListV>
-              </div>
-            </div>
-          </div>
-        </SizeBackgroundColor>
-      ),
+      children: WindowAComponent,
       actions: () => (
         <FillFooter
           height={40}
@@ -179,7 +195,7 @@ state.push(
   "windows",
   MakeWindow({
     isOpen: true,
-    title: "Drag and Drop Grids",
+    title: "Drag and Drop Grids - IFrame",
     children(props) {
       const { size, position } = props;
       //const {state} = props;

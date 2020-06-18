@@ -68,43 +68,72 @@ const flat = {
   transition: { delay: 0.3 },
 };
 
-const initialColors = {
-  "rgb(203, 212, 229)": 60,
-  "rgb(8, 157, 228)": 80,
-  "rgb(181, 227, 255)": 40,
-  "rgb(132, 187, 228)": 100,
-};
+const initialColors = {};
 
-const DragListH = () => {
-  const [colors, setColors] = useState(Object.keys(initialColors));
+const DragListH = (props) => {
+  const { children } = props;
+  const { keyOrder, setKeyOrder } = props;
 
-  // We need to collect an array of width and position data for all of this component's
-  // `DragListHItem` children, so we can later us that in calculations to decide when a dragging
-  // `DragListHItem` should swap places with its siblings.
   const positions = useRef([]).current;
   const setPosition = (i, offset) => (positions[i] = offset);
 
-  // Find the ideal index for a dragging item based on its position in the array, and its
-  // current drag offset. If it's different to its current index, we swap this item with that
-  // sibling.
   const moveItem = (i, dragOffset) => {
     const targetIndex = findIndex(i, dragOffset, positions);
-    if (targetIndex !== i) setColors(move(colors, i, targetIndex));
+    if (targetIndex !== i) setKeyOrder(move(keyOrder, i, targetIndex));
   };
 
+  // get child contents
+  let childrenContents;
+  if (isArr(children)) {
+    childrenContents = children;
+  }
+  if (isFunc(children)) {
+    const childArgs = {
+      setPosition,
+      positions,
+      moveItem,
+    };
+    childrenContents = children(childArgs);
+  }
+
+  return <ul {...classes("drag-list", "drag-list-h")}>{childrenContents}</ul>;
+};
+
+const Example = (props) => {
+  let { order, items } = props;
+
+  let { setKeyOrder } = props;
+  const [localKeyOrder, setLocalKeyOrder] = useState(order);
+
+  let _keyOrder = els(order, localKeyOrder);
+  let _setKeyOrder = els(setKeyOrder, setLocalKeyOrder);
+
   return (
-    <ul {...classes("drag-list", "drag-list-h")}>
-      {colors.map((color, i) => (
-        <DragListHItem
-          key={color}
-          i={i}
-          style={{ background: color, width: initialColors[color] }}
-          setPosition={setPosition}
-          moveItem={moveItem}
-        />
-      ))}
-    </ul>
+    <DragListH
+      keyOrder={_keyOrder}
+      setKeyOrder={_setKeyOrder}
+      children={({ positions, setPosition, moveItem }) => {
+        const mapFn = (key, i) => {
+          const moveAttrs = {
+            setPosition,
+            moveItem,
+          };
+
+          return (
+            <DragListHItem
+              key={key}
+              i={i}
+              style={{ background: "#000000A0", margin: "4px", width: "100px" }}
+              {...moveAttrs}
+            />
+          );
+        };
+        const contentsList = _keyOrder.map(mapFn);
+        return contentsList;
+      }}
+    />
   );
 };
 
-export default DragListH;
+export const sample = Example;
+export default Example;
