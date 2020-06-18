@@ -7,7 +7,7 @@ export default ({
   children,
   style = {},
   greedy = false,
-  accept = "CARD",
+  accept = "DRAG",
   dropProps = {},
   onDrop = trueFunc,
   onHover = trueFunc,

@@ -22,7 +22,7 @@ const { getNestedValue, classes, setImmutableValue, isFunc, isDef } = Utils;
  * Please excuse the mess
  */
 
-const DragWindow = withResizeDetector(function (props) {
+const DragWindow = withResizeDetector(function(props) {
   let ef = () => {}; // empty function
   let { children, actions } = props;
   let { onToggleWindow: handleOnToggleWindow } = props;
@@ -47,12 +47,22 @@ const DragWindow = withResizeDetector(function (props) {
     onSet("isDragDisabled", value);
   };
 
+  const isResizeDisabled = getNestedValue(window, "isResizeDisabled", false);
+  const setResizeDisabled = (value) => {
+    onSet("isResizeDisabled", value);
+  };
+  const toggleResizeDisabled = () => {
+    setResizeDisabled(!isResizeDisabled);
+  };
+
   const isDragging = getNestedValue(window, "isDragging", false);
   let isMouseEventsDisabled = isDragging;
 
-  const _minSize = {
-    height: getNestedValue(minSize, "height", 100),
-    width: getNestedValue(minSize, "width", 225),
+  const getMinSize = () => {
+    return {
+      height: getNestedValue(minSize, "height", 100),
+      width: getNestedValue(minSize, "width", 225),
+    };
   };
 
   const getSize = () => {
@@ -137,9 +147,9 @@ const DragWindow = withResizeDetector(function (props) {
   }
 
   // Side effect: will mutate the input values
-  const updatePosAndSize = (newPos, newSize, _minSize, containerSize) => {
-    restrictAxis(newPos, "top", newSize, "height", _minSize, containerSize);
-    restrictAxis(newPos, "left", newSize, "width", _minSize, containerSize);
+  const updatePosAndSize = (newPos, newSize, minSize, containerSize) => {
+    restrictAxis(newPos, "top", newSize, "height", minSize, containerSize);
+    restrictAxis(newPos, "left", newSize, "width", minSize, containerSize);
     handlePosTop.set(newPos.top);
     handlePosLeft.set(newPos.left);
 
@@ -172,7 +182,7 @@ const DragWindow = withResizeDetector(function (props) {
           height: handleSizeHeight.get(),
           width: handleSizeWidth.get(),
         };
-        updatePosAndSize(newPos, newSize, _minSize, containerSize);
+        updatePosAndSize(newPos, newSize, getMinSize(), containerSize);
         onSetFocus(true);
       }
     }
@@ -185,7 +195,9 @@ const DragWindow = withResizeDetector(function (props) {
   const onResizeDown = () => {
     let newValue = { ...window };
     newValue.isDragging = true;
-    newValue.isResizing = true;
+    if (!isResizeDisabled) {
+      newValue.isResizing = true;
+    }
     onSet([], newValue);
   };
 
@@ -198,69 +210,71 @@ const DragWindow = withResizeDetector(function (props) {
 
   // Resize window
   const makeOnDragReize = (key) => {
-    return function (e, info) {
+    return function(e, info) {
       let delta = info.delta;
-      const size = {
-        height: handleSizeHeight.get(),
-        width: handleSizeWidth.get(),
-      };
-      if (delta.x !== 0 || delta.y !== 0) {
-        let originalWidth = getNestedValue(size, "width", null);
-        if (Number.isNaN(originalWidth)) originalWidth = initialSize.width;
+      if (!isResizeDisabled) {
+        const size = {
+          height: handleSizeHeight.get(),
+          width: handleSizeWidth.get(),
+        };
+        if (delta.x !== 0 || delta.y !== 0) {
+          let originalWidth = getNestedValue(size, "width", null);
+          if (Number.isNaN(originalWidth)) originalWidth = initialSize.width;
 
-        let originalHeight = getNestedValue(size, "height", null);
-        if (Number.isNaN(originalHeight)) originalHeight = initialSize.height;
+          let originalHeight = getNestedValue(size, "height", null);
+          if (Number.isNaN(originalHeight)) originalHeight = initialSize.height;
 
-        let newPos = getPosition();
+          let newPos = getPosition();
 
-        // Make sure values are defined
-        let newSize = size;
-        if (Number.isNaN(size.height)) {
-          newSize = setImmutableValue(newSize, "height", originalHeight);
+          // Make sure values are defined
+          let newSize = size;
+          if (Number.isNaN(size.height)) {
+            newSize = setImmutableValue(newSize, "height", originalHeight);
+          }
+          if (Number.isNaN(size.width)) {
+            newSize = setImmutableValue(newSize, "width", originalWidth);
+          }
+
+          // Right side
+          if (["e", "se", "ne"].includes(key)) {
+            newSize = setImmutableValue(
+              newSize,
+              "width",
+              originalWidth + delta.x
+            );
+          }
+
+          // Left side
+          if (["w", "sw", "nw"].includes(key)) {
+            newSize = setImmutableValue(
+              newSize,
+              "width",
+              originalWidth - delta.x
+            );
+            newPos = setImmutableValue(newPos, "left", newPos.left + delta.x);
+          }
+
+          // Top side
+          if (["n", "ne", "nw"].includes(key)) {
+            newSize = setImmutableValue(
+              newSize,
+              "height",
+              originalHeight - delta.y
+            );
+            newPos = setImmutableValue(newPos, "top", newPos.top + delta.y);
+          }
+
+          // Bottom side
+          if (["s", "se", "sw"].includes(key)) {
+            newSize = setImmutableValue(
+              newSize,
+              "height",
+              originalHeight + delta.y
+            );
+          }
+
+          updatePosAndSize(newPos, newSize, getMinSize(), containerSize);
         }
-        if (Number.isNaN(size.width)) {
-          newSize = setImmutableValue(newSize, "width", originalWidth);
-        }
-
-        // Right side
-        if (["e", "se", "ne"].includes(key)) {
-          newSize = setImmutableValue(
-            newSize,
-            "width",
-            originalWidth + delta.x
-          );
-        }
-
-        // Left side
-        if (["w", "sw", "nw"].includes(key)) {
-          newSize = setImmutableValue(
-            newSize,
-            "width",
-            originalWidth - delta.x
-          );
-          newPos = setImmutableValue(newPos, "left", newPos.left + delta.x);
-        }
-
-        // Top side
-        if (["n", "ne", "nw"].includes(key)) {
-          newSize = setImmutableValue(
-            newSize,
-            "height",
-            originalHeight - delta.y
-          );
-          newPos = setImmutableValue(newPos, "top", newPos.top + delta.y);
-        }
-
-        // Bottom side
-        if (["s", "se", "sw"].includes(key)) {
-          newSize = setImmutableValue(
-            newSize,
-            "height",
-            originalHeight + delta.y
-          );
-        }
-
-        updatePosAndSize(newPos, newSize, _minSize, containerSize);
       }
     };
   };
@@ -269,7 +283,7 @@ const DragWindow = withResizeDetector(function (props) {
   useEffect(() => {
     let newPos = { ...getPosition() };
     let newSize = { ...getSize() };
-    updatePosAndSize(newPos, newSize, _minSize, containerSize);
+    updatePosAndSize(newPos, newSize, getMinSize(), containerSize);
   }, [containerSize.width, containerSize.height]);
 
   let dragHandleContents = (
@@ -278,48 +292,56 @@ const DragWindow = withResizeDetector(function (props) {
         onDrag={makeOnDragReize("e")}
         onDown={onResizeDown}
         onUp={onUp}
+        disabled={isResizeDisabled}
         classNames={["resize-handle", "resize-handle-e"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("w")}
         onDown={onResizeDown}
         onUp={onUp}
+        disabled={isResizeDisabled}
         classNames={["resize-handle", "resize-handle-w"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("n")}
         onDown={onResizeDown}
         onUp={onUp}
+        disabled={isResizeDisabled}
         classNames={["resize-handle", "resize-handle-n"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("s")}
         onDown={onResizeDown}
         onUp={onUp}
+        disabled={isResizeDisabled}
         classNames={["resize-handle", "resize-handle-s"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("se")}
         onDown={onResizeDown}
         onUp={onUp}
+        disabled={isResizeDisabled}
         classNames={["resize-handle-corner", "resize-handle-se"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("ne")}
         onDown={onResizeDown}
         onUp={onUp}
+        disabled={isResizeDisabled}
         classNames={["resize-handle-corner", "resize-handle-ne"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("nw")}
         onDown={onResizeDown}
         onUp={onUp}
+        disabled={isResizeDisabled}
         classNames={["resize-handle-corner", "resize-handle-nw"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("sw")}
         onDown={onResizeDown}
         onUp={onUp}
+        disabled={isResizeDisabled}
         classNames={["resize-handle-corner", "resize-handle-sw"]}
       ></DragHandle>
     </>
@@ -353,6 +375,7 @@ const DragWindow = withResizeDetector(function (props) {
       <div {...classes("button")} onClick={() => handleOnToggleWindow()}>
         <div {...classes("circle yellow")} />
       </div>
+
       <div
         {...classes("button")}
         onClick={() => setFullSize(!isFullSize)}
@@ -372,6 +395,15 @@ const DragWindow = withResizeDetector(function (props) {
       >
         {!isDragDisabled ? <LockOpenIcon /> : <LockIcon />}
       </div>
+
+      <div
+        {...classes("button")}
+        onClick={() => toggleResizeDisabled()}
+        title={!isResizeDisabled ? "Disable resize" : "Enable resize"}
+      >
+        {!isResizeDisabled ? <LockOpenIcon /> : <LockIcon />}
+      </div>
+
       <div {...classes("button", "not-allowed")} title="Anchor">
         <FlareIcon />
       </div>

@@ -9,6 +9,7 @@ import DragWindow from "../../../Components/Containers/Windows/DragWindow/";
 import WindowContainer from "../../../Components/Containers/Windows/WindowContainer/";
 import SizeBackgroundColor from "../../../Components/Containers/SizeBackgroundColor/";
 import DragListV from "../../../Components/Containers/DragListV/";
+import DragListH from "../../../Components/Containers/DragListH/";
 import StateBuffer from "../../../Utils/StateBuffer";
 import BlurredWrapper from "../../Containers/BlurredWrapper/";
 import AppSidebar from "../../../Components/TopLevel/AppSizebar/";
@@ -26,7 +27,9 @@ const initialState = {
       isOpen: true,
       isFocused: true,
       isDragging: false,
+      isDragDisabled: false,
       isResizing: false,
+      isResizingDisabled: false,
       anchor: "nw",
       position: {
         left: 300,
@@ -61,6 +64,7 @@ const initialState = {
                     </pre>
                   </div>
                 </div>
+                <DragListH></DragListH>
                 <DragListV></DragListV>
               </div>
             </div>
@@ -84,7 +88,9 @@ const initialState = {
       isOpen: false,
       isFocused: false,
       isDragging: false,
+      isDragDisabled: false,
       isResizing: false,
+      isResizingDisabled: false,
       anchor: "nw",
       position: {
         left: 1000,
@@ -107,7 +113,9 @@ const initialState = {
       isOpen: true,
       isFocused: false,
       isDragging: false,
+      isDragDisabled: false,
       isResizing: false,
+      isResizingDisabled: false,
       anchor: "nw",
       position: {
         left: 1000,

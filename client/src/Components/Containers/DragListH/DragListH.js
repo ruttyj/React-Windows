@@ -3,26 +3,26 @@ import { useEffect, useState, useRef } from "react";
 import { motion, useMotionValue } from "framer-motion";
 import { findIndex, Position } from "./find-index";
 import move from "array-move";
-import "./DragListV.scss";
+import "./DragListH.scss";
 
-const DragListVItem = ({ style = {}, setPosition, moveItem, i }) => {
+const DragListHItem = ({ style = {}, setPosition, moveItem, i }) => {
   const [isDragging, setDragging] = useState(false);
 
   // We'll use a `ref` to access the DOM element that the `motion.li` produces.
-  // This will allow us to measure its height and position, which will be useful to
+  // This will allow us to measure its width and position, which will be useful to
   // decide when a dragging element should switch places with its siblings.
   const ref = useRef(null);
 
-  // By manually creating a reference to `dragOriginY` we can manipulate this value
+  // By manually creating a reference to `dragOriginX` we can manipulate this value
   // if the user is dragging this DOM element while the drag gesture is active to
   // compensate for any movement as the items are re-positioned.
-  const dragOriginY = useMotionValue(0);
+  const dragOriginX = useMotionValue(0);
 
   // Update the measured position of the item so we can calculate when we should rearrange.
   useEffect(() => {
     setPosition(i, {
-      height: ref.current.offsetHeight,
-      top: ref.current.offsetTop,
+      width: ref.current.offsetWidth,
+      left: ref.current.offsetLeft,
     });
   });
 
@@ -30,24 +30,24 @@ const DragListVItem = ({ style = {}, setPosition, moveItem, i }) => {
     <motion.li
       ref={ref}
       initial={false}
-      // If we're dragging, we want to set the zIndex of that item to be on top of the other items.
+      // If we're dragging, we want to set the zIndex of that item to be on left of the other items.
       animate={isDragging ? onTop : flat}
       style={style}
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 1.12 }}
-      drag="y"
-      dragOriginY={dragOriginY}
-      dragConstraints={{ top: 0, bottom: 0 }}
+      drag="x"
+      dragOriginX={dragOriginX}
+      dragConstraints={{ left: 0, right: 0 }}
       dragElastic={1}
       onDragStart={() => setDragging(true)}
       onDragEnd={() => setDragging(false)}
-      onDrag={(e, { point }) => moveItem(i, point.y)}
+      onDrag={(e, { point }) => moveItem(i, point.x)}
       positionTransition={({ delta }) => {
         if (isDragging) {
           // If we're dragging, we want to "undo" the items movement within the list
-          // by manipulating its dragOriginY. This will keep the item under the cursor,
+          // by manipulating its dragOriginX. This will keep the item under the cursor,
           // even though it's jumping around the DOM.
-          dragOriginY.set(dragOriginY.get() + delta.y);
+          dragOriginX.set(dragOriginX.get() + delta.x);
         }
 
         // If `positionTransition` is a function and returns `false`, it's telling
@@ -73,12 +73,12 @@ const initialColors = {
   "rgb(132, 187, 228)": 100,
 };
 
-const DragListV = () => {
+const DragListH = () => {
   const [colors, setColors] = useState(Object.keys(initialColors));
 
-  // We need to collect an array of height and position data for all of this component's
-  // `DragListVItem` children, so we can later us that in calculations to decide when a dragging
-  // `DragListVItem` should swap places with its siblings.
+  // We need to collect an array of width and position data for all of this component's
+  // `DragListHItem` children, so we can later us that in calculations to decide when a dragging
+  // `DragListHItem` should swap places with its siblings.
   const positions = useRef([]).current;
   const setPosition = (i, offset) => (positions[i] = offset);
 
@@ -91,12 +91,12 @@ const DragListV = () => {
   };
 
   return (
-    <ul className={"drag-list-v"}>
+    <ul className={"drag-list-h"}>
       {colors.map((color, i) => (
-        <DragListVItem
+        <DragListHItem
           key={color}
           i={i}
-          style={{ background: color, height: initialColors[color] }}
+          style={{ background: color, width: initialColors[color] }}
           setPosition={setPosition}
           moveItem={moveItem}
         />
@@ -105,4 +105,4 @@ const DragListV = () => {
   );
 };
 
-export default DragListV;
+export default DragListH;

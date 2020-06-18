@@ -7,6 +7,9 @@ const { classes } = Utils;
 
 function DragHandle(props) {
   const ef = () => {}; // empty function
+
+  const { disabled = false } = props;
+
   const { children, classNames = [] } = props;
   const { onDrag = ef, onDown = ef, onUp = ef } = props;
 
@@ -14,15 +17,19 @@ function DragHandle(props) {
   const [isDown, setDown] = useState(false);
 
   const setActive = () => {
-    setIsActive(true);
+    if (!disabled) {
+      setIsActive(true);
+    }
   };
   const setInactive = () => {
     setIsActive(false);
   };
 
   const handleOnDown = () => {
-    setDown(true);
-    onDown();
+    if (!disabled) {
+      setDown(true);
+      onDown();
+    }
   };
 
   useMouseUp(() => {
@@ -39,7 +46,11 @@ function DragHandle(props) {
   return (
     <motion.div
       {...props}
-      {...classes("noselect", classNames, isActive ? "active" : "")}
+      {...classes(
+        "noselect",
+        !disabled ? classNames : "",
+        isActive ? "active" : ""
+      )}
       onPan={onDrag}
       onMouseDown={handleOnDown}
       onTouchStart={handleOnDown}

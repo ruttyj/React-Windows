@@ -1,0 +1,21 @@
+ul.drag-list-h {
+  flex-direction: row;
+  display: flex;
+}
+
+ul.drag-list-h,
+.drag-list-h li {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+ul.drag-list-h {
+  position: relative;
+  li {
+    content: "";
+    min-height: 10px;
+    cursor: pointer;
+    position: relative;
+  }
+}
