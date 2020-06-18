@@ -27,9 +27,14 @@ const DragWindow = withResizeDetector(function (props) {
   let { onToggleWindow: handleOnToggleWindow } = props;
   let { onSnapEnter = ef, onSnapLeave = ef, onSnapRelease = ef } = props; // enter: "enter snap range", leave: "leave snap range", release: "release after being involved with a snap zone"
   let { width: observedWidth, height: observedHeight } = props;
-  let { window = {}, title = "Untitled", containerSize } = props;
-  let { onSet, onSetState, onSetSize, onSetPosition } = props;
-  const borderSize = 1;
+  let { window = {}, title = "Untitled", containerSize, minSize = {} } = props;
+  let {
+    onSet = ef,
+    onSetFocus = ef,
+    onSetState = ef,
+    onSetSize = ef,
+    onSetPosition = ef,
+  } = props;
 
   const isFullSize = getNestedValue(window, "isFullSize", false);
   const setFullSize = (value) => {
@@ -41,9 +46,9 @@ const DragWindow = withResizeDetector(function (props) {
     onSet("isDragDisabled", value);
   };
 
-  const minSize = {
-    height: 100,
-    width: 225,
+  const _minSize = {
+    height: getNestedValue(minSize, "height", 100),
+    width: getNestedValue(minSize, "width", 225),
   };
 
   const initialPosition = {
@@ -133,9 +138,9 @@ const DragWindow = withResizeDetector(function (props) {
   }
 
   // Side effect: will mutate the input values
-  const updatePosAndSize = (newPos, newSize, minSize, containerSize) => {
-    restrictAxis(newPos, "top", newSize, "height", minSize, containerSize);
-    restrictAxis(newPos, "left", newSize, "width", minSize, containerSize);
+  const updatePosAndSize = (newPos, newSize, _minSize, containerSize) => {
+    restrictAxis(newPos, "top", newSize, "height", _minSize, containerSize);
+    restrictAxis(newPos, "left", newSize, "width", _minSize, containerSize);
     handlePosTop.set(newPos.top);
     handlePosLeft.set(newPos.left);
 
@@ -168,7 +173,8 @@ const DragWindow = withResizeDetector(function (props) {
           height: handleSizeHeight.get(),
           width: handleSizeWidth.get(),
         };
-        updatePosAndSize(newPos, newSize, minSize, containerSize);
+        updatePosAndSize(newPos, newSize, _minSize, containerSize);
+        onSetFocus(true);
       }
     }
   };
@@ -237,7 +243,7 @@ const DragWindow = withResizeDetector(function (props) {
           );
         }
 
-        updatePosAndSize(newPos, newSize, minSize, containerSize);
+        updatePosAndSize(newPos, newSize, _minSize, containerSize);
       }
     };
   };
@@ -246,7 +252,7 @@ const DragWindow = withResizeDetector(function (props) {
   useEffect(() => {
     let newPos = { ...getPosition() };
     let newSize = { ...getSize() };
-    updatePosAndSize(newPos, newSize, minSize, containerSize);
+    updatePosAndSize(newPos, newSize, _minSize, containerSize);
   }, [containerSize.width, containerSize.height]);
 
   let dragHandleContents = (
@@ -291,6 +297,7 @@ const DragWindow = withResizeDetector(function (props) {
   let titleContents = (
     <DragHandle
       onDrag={onDrag}
+      onClick={() => onSetFocus()}
       classNames={["title", isDragDisabled ? "not-allowed" : ""]}
     >
       {title}
@@ -348,6 +355,7 @@ const DragWindow = withResizeDetector(function (props) {
           {leftHeaderActionContents}
           <DragHandle
             onDrag={onDrag}
+            onClick={() => onSetFocus()}
             classNames={["title", isDragDisabled ? "not-allowed" : ""]}
           ></DragHandle>
           {rightHeaderActionContents}
@@ -364,6 +372,7 @@ const DragWindow = withResizeDetector(function (props) {
       animate={{ opacity: 1, y: 0, transition: "linear" }}
       style={{
         position: "absolute",
+        ...(window.isFocused ? { zIndex: 10 } : {}),
         ...(isFullSize ? { top: "0px", left: "0px" } : getPosition()),
         ...(isFullSize ? { height: "100%", width: "100%" } : getSize()),
       }}

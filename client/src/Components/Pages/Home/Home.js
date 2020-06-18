@@ -15,7 +15,7 @@ import AppSidebar from "../../../Components/TopLevel/AppSizebar/";
 import AppHeader from "../../../Components/TopLevel/AppHeader/";
 import "./Home.scss";
 
-const { getNestedValue, classes, setImmutableValue } = Utils;
+const { isDef, getNestedValue, classes, setImmutableValue } = Utils;
 const initialState = {
   windows: [
     {
@@ -25,13 +25,65 @@ const initialState = {
       isFocused: true,
       anchor: "nw",
       position: {
-        left: 600,
+        left: 300,
         top: 50,
       },
       size: {
         width: 700,
         height: 700,
       },
+      children: ({ size, position, containerSize }) => (
+        <SizeBackgroundColor>
+          <div {...classes("body", "grow")}>
+            <div {...classes("grow")}>
+              <div {...classes("column")}>
+                <div {...classes("row", "wrap")}>
+                  <div {...classes("column", "align-left")}>
+                    container:{" "}
+                    <pre>
+                      <xmp>{JSON.stringify(containerSize, null, 2)}</xmp>
+                    </pre>
+                  </div>
+                  <div {...classes("column", "align-left")}>
+                    size:{" "}
+                    <pre>
+                      <xmp>{JSON.stringify(size, null, 2)}</xmp>
+                    </pre>
+                  </div>
+                  <div {...classes("column", "align-left")}>
+                    position:
+                    <pre>
+                      <xmp>{JSON.stringify(position, null, 2)}</xmp>
+                    </pre>
+                  </div>
+                </div>
+                <DragListV></DragListV>
+              </div>
+            </div>
+          </div>
+        </SizeBackgroundColor>
+      ),
+    },
+    {
+      id: 2,
+      title: "Trooper",
+      isOpen: true,
+      isFocused: false,
+      anchor: "nw",
+      position: {
+        left: 1000,
+        top: 50,
+      },
+      size: {
+        width: 400,
+        height: 600,
+      },
+      children: ({ size, position, containerSize }) => (
+        <iframe
+          src="https://threejs.org/examples/webgl_loader_collada_skinning.html"
+          style={{ height: "100%", width: "100%" }}
+        />
+      ),
     },
   ],
 };
@@ -70,6 +122,20 @@ function Home(props) {
         newValue = setImmutableValue(newValue, foundIndex, { ...newState });
         state.set("windows", newValue);
       }
+    },
+    setFocused(id, value = null) {
+      if (!isDef(value)) {
+        value = true;
+      }
+      let newValue = state.get("windows", []);
+      newValue.forEach((window, index) => {
+        if (window.id === id) {
+          newValue = setImmutableValue(newValue, [index, "isFocused"], value);
+        } else {
+          newValue = setImmutableValue(newValue, [index, "isFocused"], false);
+        }
+      });
+      state.set("windows", newValue);
     },
   };
 
@@ -134,49 +200,12 @@ function Home(props) {
                         onSnapEnter={onSnapEnter}
                         onSnapLeave={onSnapLeave}
                         onToggleWindow={() => toggleWindow(window.id)}
+                        onSetFocus={(value) =>
+                          windowMethods.setFocused(window.id, value)
+                        }
                         title={window.title}
                         containerSize={containerSize}
-                        children={({ size, position, containerSize }) => (
-                          <SizeBackgroundColor>
-                            <div {...classes("body", "grow")}>
-                              <div {...classes("grow")}>
-                                <div {...classes("column")}>
-                                  <div {...classes("row", "wrap")}>
-                                    <div {...classes("column", "align-left")}>
-                                      container:{" "}
-                                      <pre>
-                                        <xmp>
-                                          {JSON.stringify(
-                                            containerSize,
-                                            null,
-                                            2
-                                          )}
-                                        </xmp>
-                                      </pre>
-                                    </div>
-                                    <div {...classes("column", "align-left")}>
-                                      size:{" "}
-                                      <pre>
-                                        <xmp>
-                                          {JSON.stringify(size, null, 2)}
-                                        </xmp>
-                                      </pre>
-                                    </div>
-                                    <div {...classes("column", "align-left")}>
-                                      position:
-                                      <pre>
-                                        <xmp>
-                                          {JSON.stringify(position, null, 2)}
-                                        </xmp>
-                                      </pre>
-                                    </div>
-                                  </div>
-                                  <DragListV></DragListV>
-                                </div>
-                              </div>
-                            </div>
-                          </SizeBackgroundColor>
-                        )}
+                        children={window.children}
                       />
                     );
                   }

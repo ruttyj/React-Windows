@@ -5,7 +5,7 @@ import { findIndex, Position } from "./find-index";
 import move from "array-move";
 import "./DragListV.scss";
 
-const Item = ({ color, setPosition, moveItem, i }) => {
+const DragListVItem = ({ style = {}, setPosition, moveItem, i }) => {
   const [isDragging, setDragging] = useState(false);
 
   // We'll use a `ref` to access the DOM element that the `motion.li` produces.
@@ -32,7 +32,7 @@ const Item = ({ color, setPosition, moveItem, i }) => {
       initial={false}
       // If we're dragging, we want to set the zIndex of that item to be on top of the other items.
       animate={isDragging ? onTop : flat}
-      style={{ background: color, height: heights[color] }}
+      style={style}
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 1.12 }}
       drag="y"
@@ -59,12 +59,26 @@ const Item = ({ color, setPosition, moveItem, i }) => {
   );
 };
 
-const Example = () => {
-  const [colors, setColors] = useState(initialColors);
+// Spring configs
+const onTop = { zIndex: 1 };
+const flat = {
+  zIndex: 0,
+  transition: { delay: 0.3 },
+};
+
+const initialColors = {
+  "rgb(203, 212, 229)": 60,
+  "rgb(8, 157, 228)": 80,
+  "rgb(181, 227, 255)": 40,
+  "rgb(132, 187, 228)": 100,
+};
+
+const DragListV = () => {
+  const [colors, setColors] = useState(Object.keys(initialColors));
 
   // We need to collect an array of height and position data for all of this component's
-  // `Item` children, so we can later us that in calculations to decide when a dragging
-  // `Item` should swap places with its siblings.
+  // `DragListVItem` children, so we can later us that in calculations to decide when a dragging
+  // `DragListVItem` should swap places with its siblings.
   const positions = useRef([]).current;
   const setPosition = (i, offset) => (positions[i] = offset);
 
@@ -79,10 +93,10 @@ const Example = () => {
   return (
     <ul>
       {colors.map((color, i) => (
-        <Item
+        <DragListVItem
           key={color}
           i={i}
-          color={color}
+          style={{ background: color, height: initialColors[color] }}
           setPosition={setPosition}
           moveItem={moveItem}
         />
@@ -91,24 +105,4 @@ const Example = () => {
   );
 };
 
-// Spring configs
-const onTop = { zIndex: 1 };
-const flat = {
-  zIndex: 0,
-  transition: { delay: 0.3 },
-};
-
-const initialColors = [
-  "rgb(203, 212, 229)",
-  "rgb(8, 157, 228)",
-  "rgb(181, 227, 255)",
-  "rgb(132, 187, 228)",
-];
-const heights = {
-  "rgb(203, 212, 229)": 60,
-  "rgb(8, 157, 228)": 80,
-  "rgb(181, 227, 255)": 40,
-  "rgb(132, 187, 228)": 100,
-};
-
-export default Example;
+export default DragListV;
