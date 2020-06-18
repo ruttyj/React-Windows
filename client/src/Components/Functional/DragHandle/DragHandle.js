@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Utils from "../../../Utils";
 import { motion } from "framer-motion";
-import { useMouseUp, useTouchEnd } from "../../../Utils/useWindowEvents";
+import { useUp } from "../../../Utils/useWindowEvents";
 
 const { classes } = Utils;
 
@@ -32,12 +32,7 @@ function DragHandle(props) {
     }
   };
 
-  useMouseUp(() => {
-    if (isDown) {
-      onUp();
-    }
-  });
-  useTouchEnd(() => {
+  useUp(() => {
     if (isDown) {
       onUp();
     }

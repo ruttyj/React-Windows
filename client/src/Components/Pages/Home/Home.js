@@ -136,7 +136,7 @@ const initialState = {
     },
     {
       id: ++topWindowId,
-      title: "Trooper",
+      title: "Trooper - IFrame",
       isOpen: false,
       isFocused: false,
       isDragging: false,
@@ -161,7 +161,7 @@ const initialState = {
     },
     {
       id: ++topWindowId,
-      title: "Debug",
+      title: "Debuger",
       isOpen: true,
       isFocused: true,
       isDragging: false,
@@ -280,15 +280,47 @@ function Home(props) {
     },
   });
 
-  const toggleWindow = (id) => {
+  const toggleWindow = (id, forcedToggle = false) => {
     let newValue = state.get("windows", []);
     let foundIndex = newValue.findIndex((w) => w.id === id);
     if (foundIndex > -1) {
       const wasOpen = getNestedValue(newValue, [foundIndex, "isOpen"], false);
+      const wasFocused = getNestedValue(
+        newValue,
+        [foundIndex, "isFocused"],
+        false
+      );
       let isOpen = !wasOpen;
-      newValue = windowMethods.setFocused(id, isOpen);
+      let isFocused;
+      if (forcedToggle) {
+        isFocused = isOpen;
+      } else {
+        if (!wasOpen) {
+          // was not open
+          isOpen = true;
+          isFocused = true;
+        } else {
+          // was open
+
+          // but was not focused
+          if (!wasFocused) {
+            isOpen = true;
+            isFocused = true;
+          } else {
+            //open and focused
+            isOpen = false;
+            isFocused = false;
+          }
+        }
+      }
+
+      newValue = windowMethods.setFocused(id, isFocused);
+      newValue = setImmutableValue(
+        newValue,
+        [foundIndex, "isFocused"],
+        isFocused
+      );
       newValue = setImmutableValue(newValue, [foundIndex, "isOpen"], isOpen);
-      newValue = setImmutableValue(newValue, [foundIndex, "isFocused"], isOpen);
 
       state.set("windows", newValue);
     }
@@ -342,7 +374,7 @@ function Home(props) {
                         }}
                         onSnapEnter={onSnapEnter}
                         onSnapLeave={onSnapLeave}
-                        onToggleWindow={() => toggleWindow(window.id)}
+                        onToggleWindow={() => toggleWindow(window.id, true)}
                         onSetFocus={(value) =>
                           windowMethods.setFocused(window.id, value)
                         }

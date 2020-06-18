@@ -15,6 +15,7 @@ import DragHandle from "../../../../../src/Components/Functional/DragHandle/";
 import Utils from "../../../../../src/Utils/";
 import DragListV from "../../../../../src/Components/Containers/DragListV";
 import SizeBackgroundColor from "../../../../../src/Components/Containers/SizeBackgroundColor/";
+
 import "./DragWindow.scss";
 const { getNestedValue, classes, setImmutableValue, isFunc, isDef } = Utils;
 
@@ -36,6 +37,8 @@ const DragWindow = withResizeDetector(function(props) {
     onSetSize = ef,
     onSetPosition = ef,
   } = props;
+
+  const isFocused = getNestedValue(window, "isFocused", false);
 
   const isFullSize = getNestedValue(window, "isFullSize", false);
   const setFullSize = (value) => {
@@ -204,7 +207,9 @@ const DragWindow = withResizeDetector(function(props) {
     if (!isResizeDisabled) {
       valueToSet.isResizing = true;
     }
-
+    if (!isFocused) {
+      onSetFocus(true);
+    }
     let newValue = { ...window };
     Object.assign(newValue, valueToSet);
     onSet([], newValue);
@@ -465,6 +470,15 @@ const DragWindow = withResizeDetector(function(props) {
 
   return (
     <motion.div
+      onMouseDown={() => {
+        if (!isFocused) onSetFocus(true);
+      }}
+      onMouseDown={() => {
+        if (!isFocused) onSetFocus(true);
+      }}
+      onTapStart={() => {
+        if (!isFocused) onSetFocus(true);
+      }}
       exit={{ opacity: 0, y: 100, transition: "linear" }}
       initial={{ opacity: 0, y: 100 }}
       animate={{ opacity: 1, y: 0, transition: "linear" }}
