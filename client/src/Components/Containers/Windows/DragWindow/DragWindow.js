@@ -102,25 +102,29 @@ const DragWindow = withResizeDetector(function (props) {
   };
 
   useEffect(() => {
-    setPosition(initialPosition);
     onSetSize(initialSize);
     onSetPosition(initialPosition);
   }, []);
-  const [position, setPosition] = useState(initialPosition);
   const toggleDragEnabled = () => {
     setDragDisabled(!isDragDisabled);
   };
 
-  const handleY = useMotionValue(0);
-  const handleX = useMotionValue(0);
-  const newX = useTransform(handleX, (v) => v);
-  const newY = useTransform(handleY, (v) => v);
+  const handleSizeHeight = useMotionValue(initialSize.height);
+  const handleSizeWidth = useMotionValue(initialSize.width);
+  const handlePosTop = useMotionValue(initialPosition.top);
+  const handlePosLeft = useMotionValue(initialPosition.left);
+  const newPosLeft = useTransform(handlePosLeft, (v) => v);
+  const newPosTop = useTransform(handlePosTop, (v) => v);
+
+  const newSizeWidth = useTransform(handleSizeWidth, (v) => v);
+  const newSizeHeight = useTransform(handleSizeHeight, (v) => v);
+
   if (isFullSize) {
-    if (newX.get() !== 0) newX.set(0);
-    if (newY.get() !== 0) newY.set(0);
+    if (newPosLeft.get() !== 0) newPosLeft.set(0);
+    if (newPosTop.get() !== 0) newPosTop.set(0);
     onSetPosition({
-      top: newY.get(),
-      left: newX.get(),
+      top: newPosTop.get(),
+      left: newPosLeft.get(),
     });
   }
 
@@ -167,9 +171,11 @@ const DragWindow = withResizeDetector(function (props) {
   const updatePosAndSize = (newPos, newSize, minSize, containerSize) => {
     restrictAxis(newPos, "top", newSize, "height", minSize, containerSize);
     restrictAxis(newPos, "left", newSize, "width", minSize, containerSize);
-    handleY.set(newPos.top);
-    handleX.set(newPos.left);
-    setPosition(newPos);
+    handlePosTop.set(newPos.top);
+    handlePosLeft.set(newPos.left);
+
+    handleSizeHeight.set(newSize.height);
+    handleSizeWidth.set(newSize.width);
 
     onSetPosition(newPos);
     onSetSize(newSize);
@@ -189,13 +195,14 @@ const DragWindow = withResizeDetector(function (props) {
 
       let delta = info.delta;
       if (delta.x !== 0 || delta.y !== 0) {
-        const posY = handleY.get() + delta.y;
-        const posX = handleX.get() + delta.x;
         const newPos = {
-          left: posX,
-          top: posY,
+          left: handlePosLeft.get() + delta.x,
+          top: handlePosTop.get() + delta.y,
         };
-        const newSize = getSize();
+        const newSize = {
+          height: handleSizeHeight.get(),
+          width: handleSizeWidth.get(),
+        };
         updatePosAndSize(newPos, newSize, minSize, containerSize);
       }
     }
@@ -205,7 +212,10 @@ const DragWindow = withResizeDetector(function (props) {
   const makeOnDragReize = (key) => {
     return function (e, info) {
       let delta = info.delta;
-      const size = getSize();
+      const size = {
+        height: handleSizeHeight.get(),
+        width: handleSizeWidth.get(),
+      };
       if (delta.x !== 0 || delta.y !== 0) {
         let originalWidth = getNestedValue(size, "width", null);
         if (Number.isNaN(originalWidth)) originalWidth = initialSize.width;
