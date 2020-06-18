@@ -25,6 +25,8 @@ const initialState = {
       title: "Window A",
       isOpen: true,
       isFocused: true,
+      isDragging: false,
+      isResizing: false,
       anchor: "nw",
       position: {
         left: 300,
@@ -81,6 +83,8 @@ const initialState = {
       title: "Trooper",
       isOpen: false,
       isFocused: false,
+      isDragging: false,
+      isResizing: false,
       anchor: "nw",
       position: {
         left: 1000,
@@ -102,6 +106,8 @@ const initialState = {
       title: "Debug",
       isOpen: true,
       isFocused: false,
+      isDragging: false,
+      isResizing: false,
       anchor: "nw",
       position: {
         left: 1000,

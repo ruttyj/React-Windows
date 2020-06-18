@@ -49,23 +49,10 @@ const DragWindow = withResizeDetector(function (props) {
 
   const isDragging = getNestedValue(window, "isDragging", false);
   let isMouseEventsDisabled = isDragging;
-  const setIsDragging = function (value) {
-    onSet("isDragging", Boolean(value));
-  };
 
   const _minSize = {
     height: getNestedValue(minSize, "height", 100),
     width: getNestedValue(minSize, "width", 225),
-  };
-
-  const initialPosition = {
-    top: window.position.top,
-    left: window.position.left,
-  };
-
-  const initialSize = {
-    height: window.size.height,
-    width: window.size.width,
   };
 
   const getSize = () => {
@@ -81,10 +68,15 @@ const DragWindow = withResizeDetector(function (props) {
     };
   };
 
+  const initialPosition = getPosition();
+  const initialSize = getSize();
+
+  // Set the position if not defined on original object
   useEffect(() => {
     onSetSize(initialSize);
     onSetPosition(initialPosition);
   }, []);
+
   const toggleDragEnabled = () => {
     setDragDisabled(!isDragDisabled);
   };
@@ -187,11 +179,21 @@ const DragWindow = withResizeDetector(function (props) {
   };
 
   const onDown = () => {
-    setIsDragging(true);
+    onSet("isDragging", true);
+  };
+
+  const onResizeDown = () => {
+    let newValue = { ...window };
+    newValue.isDragging = true;
+    newValue.isResizing = true;
+    onSet([], newValue);
   };
 
   const onUp = (e, info) => {
-    setIsDragging(false);
+    let newValue = { ...window };
+    newValue.isDragging = false;
+    newValue.isResizing = false;
+    onSet([], newValue);
   };
 
   // Resize window
@@ -274,49 +276,49 @@ const DragWindow = withResizeDetector(function (props) {
     <>
       <DragHandle
         onDrag={makeOnDragReize("e")}
-        onDown={onDown}
+        onDown={onResizeDown}
         onUp={onUp}
         classNames={["resize-handle", "resize-handle-e"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("w")}
-        onDown={onDown}
+        onDown={onResizeDown}
         onUp={onUp}
         classNames={["resize-handle", "resize-handle-w"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("n")}
-        onDown={onDown}
+        onDown={onResizeDown}
         onUp={onUp}
         classNames={["resize-handle", "resize-handle-n"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("s")}
-        onDown={onDown}
+        onDown={onResizeDown}
         onUp={onUp}
         classNames={["resize-handle", "resize-handle-s"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("se")}
-        onDown={onDown}
+        onDown={onResizeDown}
         onUp={onUp}
         classNames={["resize-handle-corner", "resize-handle-se"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("ne")}
-        onDown={onDown}
+        onDown={onResizeDown}
         onUp={onUp}
         classNames={["resize-handle-corner", "resize-handle-ne"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("nw")}
-        onDown={onDown}
+        onDown={onResizeDown}
         onUp={onUp}
         classNames={["resize-handle-corner", "resize-handle-nw"]}
       ></DragHandle>
       <DragHandle
         onDrag={makeOnDragReize("sw")}
-        onDown={onDown}
+        onDown={onResizeDown}
         onUp={onUp}
         classNames={["resize-handle-corner", "resize-handle-sw"]}
       ></DragHandle>
