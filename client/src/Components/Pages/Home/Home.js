@@ -16,10 +16,12 @@ import AppHeader from "../../../Components/TopLevel/AppHeader/";
 import "./Home.scss";
 
 const { isDef, getNestedValue, classes, setImmutableValue } = Utils;
+
+let topWindowId = 0;
 const initialState = {
   windows: [
     {
-      id: 1,
+      id: ++topWindowId,
       title: "Window A",
       isOpen: true,
       isFocused: true,
@@ -65,9 +67,9 @@ const initialState = {
       ),
     },
     {
-      id: 2,
+      id: ++topWindowId,
       title: "Trooper",
-      isOpen: true,
+      isOpen: false,
       isFocused: false,
       anchor: "nw",
       position: {
@@ -83,6 +85,29 @@ const initialState = {
           src="https://threejs.org/examples/webgl_loader_collada_skinning.html"
           style={{ height: "100%", width: "100%" }}
         />
+      ),
+    },
+    {
+      id: ++topWindowId,
+      title: "Debug",
+      isOpen: true,
+      isFocused: false,
+      anchor: "nw",
+      position: {
+        left: 1000,
+        top: 50,
+      },
+      size: {
+        width: 400,
+        height: 600,
+      },
+      children: ({ size, position, containerSize }) => (
+        <pre {...classes("column", "align-left", "full-width")}>
+          <xmp>
+            state:
+            {JSON.stringify(state.get(), null, 2)}
+          </xmp>
+        </pre>
       ),
     },
   ],
