@@ -7,9 +7,7 @@ const {
   isArr,
   isFunc,
   getNestedValue,
-  classes,
   setImmutableValue,
-  deleteImmutableValue,
 } = Utils;
 let topWindowId = 0;
 
@@ -28,6 +26,7 @@ function WindowManager(state) {
       isFocused = false,
       isDragDisabled = false,
       isResizeDisabled = false,
+      disablePointerEventsOnBlur = false,
       position = null,
       zIndex = 1,
       size = null,
@@ -61,6 +60,7 @@ function WindowManager(state) {
       isResizing: false,
       isDragDisabled,
       isResizeDisabled,
+      disablePointerEventsOnBlur,
       children,
       actions,
     };
@@ -81,7 +81,7 @@ function WindowManager(state) {
     }
   }
 
-  function get(id, path = [], fallback = null) {
+  function getWindow(id, path = [], fallback = null) {
     let _path = isArr(path) ? path : [path];
     return state.get(["windows", "items", id, ..._path], fallback);
   }
@@ -91,7 +91,7 @@ function WindowManager(state) {
     state.set(["windows", "items", id, ..._path], value);
   }
 
-  function set(id, window) {
+  function setWindow(id, window) {
     state.set(["windows", "items", id], window);
   }
 
@@ -122,31 +122,27 @@ function WindowManager(state) {
   }
 
   function setPosition(id, position) {
-    let window = get(id);
+    let window = getWindow(id);
     if (isDef(window)) {
       let clonedValue = setImmutableValue(window, "position", {
         ...position,
       });
-      set(id, clonedValue);
+      setWindow(id, clonedValue);
     }
   }
 
   function setSize(id, size) {
-    let window = get(id);
+    let window = getWindow(id);
     if (isDef(window)) {
       let clonedValue = setImmutableValue(window, "size", { ...size });
-      set(id, clonedValue);
+      setWindow(id, clonedValue);
     }
-  }
-
-  function setState(id, newState) {
-    set(id, newState);
   }
 
   function setFocused(id, value = null) {
     let isFocused = !isDef(value) ? true : value;
     if (isFocused) {
-      const wasFocused = get(id, "isFocused", false);
+      const wasFocused = getWindow(id, "isFocused", false);
       if (!wasFocused) {
         // change the render order
         let foundIndex = getZIndexOrder().findIndex((v) => v === id);
@@ -187,7 +183,7 @@ function WindowManager(state) {
   }
 
   function toggleWindow(id, forcedToggle = false) {
-    let window = get(id);
+    let window = getWindow(id);
     let newValue = getOrderedWindows();
     if (isDef(window)) {
       const wasOpen = getNestedValue(window, "isOpen", false);
@@ -223,8 +219,8 @@ function WindowManager(state) {
 
   const publicScope = {
     createWindow,
-    get,
-    set,
+    getWindow,
+    setWindow,
     setValue,
     getOrderedWindows,
     getTaskbarOrder,
@@ -235,7 +231,6 @@ function WindowManager(state) {
     getKey,
     setPosition,
     setSize,
-    setState,
     setFocused,
     removeWindow,
     toggleWindow,

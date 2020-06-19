@@ -15,7 +15,6 @@ import StateBuffer from "../../../Utils/StateBuffer";
 import BlurredWrapper from "../../Containers/BlurredWrapper/";
 import AppSidebar from "../../../Components/TopLevel/AppSizebar/";
 import AppHeader from "../../../Components/TopLevel/AppHeader/";
-import update from "immutability-helper";
 import WindowManager from "../../../Utils/WindowManager";
 import "./Home.scss";
 
@@ -122,6 +121,7 @@ windowManager.createWindow({
     width: 400,
     height: 600,
   },
+  disablePointerEventsOnBlur: true,
   children: ({ size, position, containerSize }) => (
     <iframe
       src="https://threejs.org/examples/webgl_loader_collada_skinning.html"
@@ -211,13 +211,13 @@ function Home(props) {
                       <DragWindow
                         window={window}
                         onSet={(path, value) =>
-                          windowManager.setState(
+                          windowManager.setWindow(
                             window.id,
                             setImmutableValue(window, path, value)
                           )
                         }
                         onSetState={(...args) =>
-                          windowManager.setState(window.id, ...args)
+                          windowManager.setWindow(window.id, ...args)
                         }
                         onSetSize={(...args) =>
                           windowManager.setSize(window.id, ...args)

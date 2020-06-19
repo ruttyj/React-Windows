@@ -40,6 +40,11 @@ const DragWindow = withResizeDetector(function(props) {
   } = props;
 
   const isFocused = getNestedValue(window, "isFocused", false);
+  const disablePointerEventsOnBlur = getNestedValue(
+    window,
+    "disablePointerEventsOnBlur",
+    false
+  );
 
   const isFullSize = getNestedValue(window, "isFullSize", false);
   const setFullSize = (value) => {
@@ -505,7 +510,8 @@ const DragWindow = withResizeDetector(function(props) {
                   "window-content",
                   "tint-bkgd",
                   "column",
-                  isMouseEventsDisabled || !isFocused
+                  isMouseEventsDisabled ||
+                  (disablePointerEventsOnBlur && !isFocused)
                     ? "disable-pointer-events"
                     : "",
                 ]}
