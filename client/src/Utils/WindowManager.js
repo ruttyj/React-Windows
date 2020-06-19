@@ -163,8 +163,10 @@ function WindowManager(state) {
     getZIndexOrder().forEach((windowId) => {
       let zi = zIndex++;
       setValue(windowId, "zIndex", zi);
-      if (windowId !== id) {
-        setValue(id, "isFocused", false);
+      if (windowId === id) {
+        setValue(windowId, "isFocused", isFocused);
+      } else {
+        setValue(windowId, "isFocused", false);
       }
     });
   }
