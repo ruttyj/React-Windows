@@ -4,11 +4,13 @@ import Utils from "../Utils/";
 
 const {
   isDef,
+  isDefNested,
   isArr,
   isObj,
   isFunc,
   getNestedValue,
   setImmutableValue,
+  deleteImmutableValue,
 } = Utils;
 
 const identity = (v) => v;
@@ -62,11 +64,23 @@ export default function StateBuffer(_initialState = {}) {
   function push(path = [], value = undefined) {
     if (value !== undefined) {
       let pointer = getNestedValue(mCurrentState, path, undefined);
+      let newValue = pointer;
       if (isArr(pointer)) {
-        pointer.push(value);
+        newValue = [...pointer, value];
+      } else {
+        newValue = [value];
       }
+      mCurrentState = setImmutableValue(mCurrentState, path, newValue);
     } else {
       // You mean delete right, or keep same value?????
+    }
+    _flush();
+  }
+
+  function remove(path = []) {
+    if (isStateDefNested(path)) {
+      mCurrentState = deleteImmutableValue(mCurrentState, path);
+      _flush();
     }
   }
 
@@ -89,6 +103,10 @@ export default function StateBuffer(_initialState = {}) {
         }
       }
     }
+  }
+
+  function isStateDefNested(path) {
+    return isDefNested(mCurrentState, path, false);
   }
 
   function is(A, B = undefined, C = undefined) {
@@ -132,7 +150,7 @@ export default function StateBuffer(_initialState = {}) {
     _flush();
   }
 
-  function flush(_dispatch) {
+  function flush() {
     if (isDef(mSetter)) {
       mSetter(mMutator(mCurrentState));
     }
@@ -148,7 +166,8 @@ export default function StateBuffer(_initialState = {}) {
 
   const publicScope = {
     // check wither value exists or matches some condition
-    is,
+    is, // is truthy
+    isDef: isStateDefNested, // is not null or undefiend
 
     // If is boolean, toggle value
     // @TODO If array item toggle it's existance
@@ -163,6 +182,7 @@ export default function StateBuffer(_initialState = {}) {
 
     // if path points to array, push value
     push,
+    remove,
 
     // For each value at the path do something
     map,

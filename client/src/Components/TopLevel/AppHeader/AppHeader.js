@@ -15,9 +15,9 @@ function AppHeader(props) {
             "v-align-center"
           )}
         >
-          <ToolbarButton>R</ToolbarButton>
-          <ToolbarButton>C</ToolbarButton>
           <ToolbarButton>L</ToolbarButton>
+          <ToolbarButton>C</ToolbarButton>
+          <ToolbarButton>R</ToolbarButton>
         </div>
       </BlurredWrapper>
     </div>

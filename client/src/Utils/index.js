@@ -1,6 +1,7 @@
 import classNames from "classname";
 
 const els = (v, el) => (isDef(v) ? v : el);
+const elsFn = (v, fn) => (isDef(v) ? v : fn());
 const isDef = (v) => v !== undefined && v !== null;
 const isArr = (v) => isDef(v) && Array.isArray(v);
 const isFunc = (v) => isDef(v) && typeof v === "function";
@@ -82,35 +83,52 @@ const isDefNested = function(reference, path) {
   return isDef(getNestedValue(reference, path, undefined));
 };
 
-const deleteNestedValue = function(a, b, c) {
-  var deleter;
-  var startingRef;
-  var tempPath;
-  if (typeof a === "function") {
-    deleter = a;
-    startingRef = b;
-    tempPath = c;
-  } else {
-    deleter = (r, k) => {
-      delete r[k];
-    }; // standard delete syntax
-    startingRef = a;
-    tempPath = b;
-  }
-  var ref = startingRef;
-  var path = tempPath instanceof Array ? tempPath : [tempPath];
-  var lastIndex = path.length - 1;
-  var current = 0;
-  path.forEach((key) => {
-    if (current === lastIndex) {
-      deleter(ref, key);
-    } else {
-      ref = ref[key];
-    }
-    ++current;
-  });
-};
+// Will return a new object/array with the nested value removed
+// Works with objects/arrays
+function deleteImmutableValue(ref, _path) {
+  let path = Array.isArray(_path) ? _path : [_path];
+  if (path.length > 0) {
+    let key = path[0];
 
+    // Clone branch
+    let sClone;
+    if (isArr(ref)) {
+      key = parseInt(key, 10);
+      sClone = [...ref];
+    } else if (isObj(ref)) {
+      sClone = { ...ref };
+    }
+
+    if (isDef(sClone)) {
+      if (path.length === 1) {
+        if (isArr(sClone)) {
+          let deleteIndex = parseInt(path[0]);
+          if (
+            !Number.isNaN(deleteIndex) &&
+            -1 < deleteIndex &&
+            deleteIndex < sClone.length
+          ) {
+            sClone.splice(deleteIndex, 1);
+          }
+        } else if (isObj(sClone)) {
+          let deleteKey = path[0];
+          if (sClone[deleteKey] !== undefined) {
+            delete sClone[deleteKey];
+          }
+        }
+      } else {
+        let nextPath = path.slice(1);
+        sClone[key] = deleteImmutableValue(sClone[key], nextPath);
+      }
+      return sClone;
+    }
+    return ref;
+  } else {
+    return ref;
+  }
+}
+
+// Returns a new object/array with the nested value added
 function setImmutableValue(ref, _path, value) {
   let path = Array.isArray(_path) ? _path : [_path];
   if (path.length > 0) {
@@ -159,13 +177,13 @@ export default {
   isNum,
   isObj,
   els,
+  elsFn,
   clamp,
   classes,
   getNestedValue,
   setNestedValue,
   isDefNested,
   //@TODO checkNested(ref, [path], op, value)
-  deleteNestedValue,
   setImmutableValue,
-  deleteNestedValue,
+  deleteImmutableValue,
 };

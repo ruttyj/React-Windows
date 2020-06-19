@@ -15,9 +15,18 @@ import StateBuffer from "../../../Utils/StateBuffer";
 import BlurredWrapper from "../../Containers/BlurredWrapper/";
 import AppSidebar from "../../../Components/TopLevel/AppSizebar/";
 import AppHeader from "../../../Components/TopLevel/AppHeader/";
+import update from "immutability-helper";
 import "./Home.scss";
 
-const { els, isDef, getNestedValue, classes, setImmutableValue } = Utils;
+const {
+  els,
+  elsFn,
+  isDef,
+  getNestedValue,
+  classes,
+  setImmutableValue,
+  deleteImmutableValue,
+} = Utils;
 let topWindowId = 0;
 function MakeWindow(props) {
   const { children } = props;
@@ -26,36 +35,41 @@ function MakeWindow(props) {
   let {
     isOpen = false,
     isFocused = false,
-    isDragging = false,
     isDragDisabled = false,
-    isResizing = false,
     isResizeDisabled = false,
     position = null,
     size = null,
+    actions = null,
   } = props;
 
+  if (isFocused) {
+    isOpen = isFocused;
+  }
+  position = elsFn(position, () => ({
+    left: 0,
+    top: 0,
+  }));
+  size = elsFn(size, () => ({
+    width: 700,
+    height: 700,
+  }));
+
   let id = ++topWindowId;
-  key = els(key, "#${id}");
+  key = els(key, `#${id}`);
   return {
     id,
     key,
     title: els(title, `Window #${topWindowId}`),
     isOpen,
+    position,
+    size,
     isFocused,
     isDragging: false,
-    isDragDisabled: false,
     isResizing: false,
-    isResizeDisabled: false,
-    anchor: "nw",
-    position: {
-      left: 0,
-      top: 0,
-    },
-    size: {
-      width: 700,
-      height: 700,
-    },
-    children: children,
+    isDragDisabled,
+    isResizeDisabled,
+    children,
+    actions,
   };
 }
 
@@ -104,16 +118,9 @@ function WindowAComponent(props) {
 
 const initialState = {
   windows: [
-    {
-      id: ++topWindowId,
+    MakeWindow({
       title: "Window A",
       isOpen: false,
-      isFocused: false,
-      isDragging: false,
-      isDragDisabled: false,
-      isResizing: false,
-      isResizeDisabled: false,
-      anchor: "nw",
       position: {
         left: 300,
         top: 50,
@@ -133,17 +140,11 @@ const initialState = {
           <div {...classes("button", "not-allowed")}>Confirm</div>
         </FillFooter>
       ),
-    },
-    {
-      id: ++topWindowId,
+    }),
+    MakeWindow({
       title: "Trooper - IFrame",
       isOpen: false,
       isFocused: false,
-      isDragging: false,
-      isDragDisabled: false,
-      isResizing: false,
-      isResizeDisabled: false,
-      anchor: "nw",
       position: {
         left: 1000,
         top: 50,
@@ -158,17 +159,11 @@ const initialState = {
           style={{ height: "100%", width: "100%" }}
         />
       ),
-    },
-    {
+    }),
+    MakeWindow({
       id: ++topWindowId,
       title: "Debuger",
-      isOpen: true,
       isFocused: true,
-      isDragging: false,
-      isDragDisabled: false,
-      isResizing: false,
-      isResizeDisabled: false,
-      anchor: "nw",
       position: {
         left: 1000,
         top: 50,
@@ -185,34 +180,12 @@ const initialState = {
           </xmp>
         </pre>
       ),
-    },
+    }),
   ],
 };
 
+// add additional window
 const state = StateBuffer(initialState);
-
-state.push(
-  "windows",
-  MakeWindow({
-    isOpen: false,
-    title: "Drag and Drop Grids - IFrame",
-    children(props) {
-      const { size, position } = props;
-      //const {state} = props;
-      //@TODO const state.set("")
-
-      return (
-        <iframe
-          {...classes(["full"])}
-          style={{
-            "background-color": "white",
-          }}
-          src={`https://csb-7svhq-7wti992fk.vercel.app/`}
-        />
-      );
-    },
-  })
-);
 
 function Home(props) {
   const [isLeftSnapIndicator, setIsLeftSnapIndicator] = useState(false);
@@ -278,6 +251,14 @@ function Home(props) {
       state.set("windows", newValue);
       return newValue;
     },
+    removeWindow(id) {
+      let windows = state.get("windows", []);
+      const index = windows.findIndex((w) => w.id === id);
+      if (index > -1) {
+        state.remove(["windows", index]);
+      }
+      console.log(state.get());
+    },
   });
 
   const toggleWindow = (id, forcedToggle = false) => {
@@ -334,10 +315,37 @@ function Home(props) {
     if (isLeftSnapIndicator) setIsLeftSnapIndicator(false);
   };
 
+  const addWindow = () => {
+    console.log("addWindow");
+    state.push(
+      "windows",
+      MakeWindow({
+        isFocused: true,
+        title: "Drag and Drop Grids - IFrame",
+        children(props) {
+          const { size, position } = props;
+          //const {state} = props;
+          //@TODO const state.set("")
+
+          return (
+            <iframe
+              {...classes(["full"])}
+              style={{
+                "background-color": "white",
+              }}
+              src={`https://csb-7svhq-7wti992fk.vercel.app/`}
+            />
+          );
+        },
+      })
+    );
+    state.flush();
+  };
+
   return (
     <div {...classes("full", "row", "main_bkgd")}>
       <AppSidebar>
-        <div {...classes("button", "not-allowed")}>
+        <div {...classes("button")} onClick={() => addWindow()}>
           <AddIcon />
         </div>
       </AppSidebar>
@@ -372,6 +380,7 @@ function Home(props) {
                         onSetPosition={(...args) => {
                           windowMethods.setPosition(window.id, ...args);
                         }}
+                        onClose={() => windowMethods.removeWindow(window.id)}
                         onSnapEnter={onSnapEnter}
                         onSnapLeave={onSnapLeave}
                         onToggleWindow={() => toggleWindow(window.id, true)}

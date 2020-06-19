@@ -36,6 +36,7 @@ const DragWindow = withResizeDetector(function(props) {
     onSetState = ef,
     onSetSize = ef,
     onSetPosition = ef,
+    onClose = ef,
   } = props;
 
   const isFocused = getNestedValue(window, "isFocused", false);
@@ -386,7 +387,7 @@ const DragWindow = withResizeDetector(function(props) {
   );
   let leftHeaderActionContents = (
     <div {...classes("actions", "row")}>
-      <div {...classes("button", "not-allowed")} title="Close">
+      <div {...classes("button")} title="Close" onClick={() => onClose()}>
         <div {...classes("circle red")} />
       </div>
 
