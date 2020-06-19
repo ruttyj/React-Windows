@@ -146,6 +146,12 @@ function WindowManager(state) {
     return state.get(["windows", "items"], {});
   }
 
+  // Get windows so frames are not rerendered when reordering taskbar
+  function getAllWindows() {
+    let items = state.get(["windows", "items"], {});
+    return Object.keys(items).map((key) => items[key]);
+  }
+
   function getRenderOrderedWindows() {
     let idIndexedWindows = getWindowsKeyed();
     return getRenderOrder().map((id) => idIndexedWindows[id]);
@@ -246,6 +252,7 @@ function WindowManager(state) {
     setWindow,
     setValue,
     getOrderedWindows,
+    getAllWindows,
     getTaskbarOrder,
     setTaskbarOrder,
     getRenderOrder,

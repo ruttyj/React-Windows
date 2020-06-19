@@ -274,7 +274,7 @@ function Home(props) {
             leftIndicator={isLeftSnapIndicator}
             children={({ containerSize }) => (
               <>
-                {windowManager.getOrderedWindows().map((window) => {
+                {windowManager.getAllWindows().map((window) => {
                   let contents = "";
                   if (window.isOpen) {
                     contents = (
