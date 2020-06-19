@@ -1,4 +1,5 @@
 import { debounce } from "lodash";
+import arraySwap from "array-move";
 
 import Utils from "../Utils/";
 
@@ -8,6 +9,7 @@ const {
   isArr,
   isObj,
   isFunc,
+  inRange,
   getNestedValue,
   setImmutableValue,
   deleteImmutableValue,
@@ -75,6 +77,38 @@ export default function StateBuffer(_initialState = {}) {
       // You mean delete right, or keep same value?????
     }
     _flush();
+  }
+
+  function swap(path = [], key1, key2) {
+    let pointer = getNestedValue(mCurrentState, path, undefined);
+    if (isDef(pointer)) {
+      if (isArr(pointer)) {
+        let newValue = [...pointer];
+        let index1 = parseInt(key1, 10);
+        let index2 = parseInt(key2, 10);
+        if (
+          inRange(0, index1, newValue.length) &&
+          inRange(0, index1, newValue.length)
+        ) {
+          let temp1 = getNestedValue(pointer, index1);
+          let temp2 = getNestedValue(pointer, index2);
+          newValue = setImmutableValue(newValue, index1, temp2);
+          newValue = setImmutableValue(newValue, temp2, temp1);
+          mCurrentState = setImmutableValue(mCurrentState, path, newValue);
+        }
+      }
+    } else if (isObj(pointer)) {
+      let newValue = { ...pointer };
+      if (isDef(pointer[key1]) && isDef(pointer[key2])) {
+        let temp1 = getNestedValue(pointer, key1);
+        let temp2 = getNestedValue(pointer, key2);
+        newValue = setImmutableValue(newValue, key1, temp2);
+        newValue = setImmutableValue(newValue, key2, temp1);
+        mCurrentState = setImmutableValue(mCurrentState, path, newValue);
+      }
+    }
+
+    console.log("mCurrentState", mCurrentState);
   }
 
   function remove(path = []) {
@@ -182,6 +216,7 @@ export default function StateBuffer(_initialState = {}) {
 
     // if path points to array, push value
     push,
+    swap,
     remove,
 
     // For each value at the path do something

@@ -8,6 +8,8 @@ const isFunc = (v) => isDef(v) && typeof v === "function";
 const isStr = (v) => isDef(v) && typeof v === "string";
 const isNum = (v) => isDef(v) && typeof v === "number";
 const isObj = (v) => isDef(v) && typeof v === "object";
+const inRangeExclusive = (min, val, max) => min < val < max;
+const inRangeInclusive = (min, val, max) => min <= val <= max;
 
 function clamp(min, value, max) {
   return Math.min(Math.max(min, value), max);
@@ -170,6 +172,7 @@ function classes(...args) {
 }
 
 export default {
+  // variable checks
   isDef,
   isArr,
   isFunc,
@@ -178,7 +181,13 @@ export default {
   isObj,
   els,
   elsFn,
+  inRange: inRangeInclusive,
+  inRangeInclusive,
+  inRangeExclusive,
+  // number manip
   clamp,
+
+  // react helpers
   classes,
   getNestedValue,
   setNestedValue,

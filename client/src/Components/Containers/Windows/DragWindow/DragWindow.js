@@ -65,7 +65,7 @@ const DragWindow = withResizeDetector(function(props) {
   const getMinSize = () => {
     return {
       height: getNestedValue(minSize, "height", 100),
-      width: getNestedValue(minSize, "width", 225),
+      width: getNestedValue(minSize, "width", 250),
     };
   };
 
@@ -377,7 +377,7 @@ const DragWindow = withResizeDetector(function(props) {
   let titleContents = (
     <DragHandle
       onDrag={onDrag}
-      onDown={onDown}
+      onDown={() => onDown()}
       onUp={onUp}
       onClick={() => onSetFocus()}
       classNames={["title", isDragDisabled ? "not-allowed" : ""]}
@@ -447,7 +447,7 @@ const DragWindow = withResizeDetector(function(props) {
           {leftHeaderActionContents}
           <DragHandle
             onDrag={onDrag}
-            onDown={onDown}
+            onDown={() => onDown()}
             onUp={onUp}
             onClick={() => onSetFocus()}
             classNames={["title", isDragDisabled ? "not-allowed" : ""]}
@@ -469,6 +469,7 @@ const DragWindow = withResizeDetector(function(props) {
     }
   }
 
+  const zIndex = getNestedValue(window, "zIndex", 1);
   return (
     <motion.div
       onMouseDown={() => {
@@ -485,7 +486,7 @@ const DragWindow = withResizeDetector(function(props) {
       animate={{ opacity: 1, y: 0, transition: "linear" }}
       style={{
         position: "absolute",
-        ...(window.isFocused ? { zIndex: 10 } : {}),
+        zIndex: zIndex,
         ...(isFullSize ? { top: "0px", left: "0px" } : getPosition()),
         ...(isFullSize ? { height: "100%", width: "100%" } : getSize()),
       }}
