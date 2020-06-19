@@ -7,7 +7,7 @@ import Utils from "../../../Utils/";
 import "./DragListH.scss";
 const { isDef, isFunc, isArr, els, classes } = Utils;
 
-const DragListHItem = ({ style = {}, setPosition, moveItem, i }) => {
+const DragListHItem = ({ style = {}, setPosition, moveItem, i, children }) => {
   const [isDragging, setDragging] = useState(false);
 
   // We'll use a `ref` to access the DOM element that the `motion.li` produces.
@@ -22,12 +22,13 @@ const DragListHItem = ({ style = {}, setPosition, moveItem, i }) => {
 
   // Update the measured position of the item so we can calculate when we should rearrange.
   useEffect(() => {
-    setPosition(i, {
+    const tempData = {
       width: ref.current.offsetWidth,
       left: ref.current.offsetLeft,
-    });
+    };
+    setPosition(i, tempData);
   });
-
+  //pointer-events: none;
   return (
     <motion.li
       ref={ref}
@@ -57,7 +58,17 @@ const DragListHItem = ({ style = {}, setPosition, moveItem, i }) => {
         // dragging, we don't want any animation to occur.
         return !isDragging;
       }}
-    />
+    >
+      <div
+        style={{
+          height: "100%",
+          width: "fit-contents",
+          ...(isDragging ? { pointerEvents: "none" } : {}),
+        }}
+      >
+        {children}
+      </div>
+    </motion.li>
   );
 };
 
@@ -67,8 +78,6 @@ const flat = {
   zIndex: 0,
   transition: { delay: 0.3 },
 };
-
-const initialColors = {};
 
 const DragListH = (props) => {
   const { children } = props;
@@ -102,18 +111,22 @@ const DragListH = (props) => {
 const Example = (props) => {
   let { order, items } = props;
 
-  let { setKeyOrder } = props;
+  let { setOrder } = props;
   const [localKeyOrder, setLocalKeyOrder] = useState(order);
 
   let _keyOrder = els(order, localKeyOrder);
-  let _setKeyOrder = els(setKeyOrder, setLocalKeyOrder);
+  let _setKeyOrder = els(setOrder, setLocalKeyOrder);
 
   return (
     <DragListH
       keyOrder={_keyOrder}
-      setKeyOrder={_setKeyOrder}
+      setKeyOrder={(...args) => {
+        //console.log("Example setKeyOrder", ...args);
+        _setKeyOrder(...args);
+      }}
       children={({ positions, setPosition, moveItem }) => {
         const mapFn = (key, i) => {
+          const item = items[key];
           const moveAttrs = {
             setPosition,
             moveItem,
@@ -123,8 +136,11 @@ const Example = (props) => {
             <DragListHItem
               key={key}
               i={i}
-              style={{ background: "#000000A0", margin: "4px", width: "100px" }}
+              style={{
+                width: "fit-content",
+              }}
               {...moveAttrs}
+              children={item}
             />
           );
         };

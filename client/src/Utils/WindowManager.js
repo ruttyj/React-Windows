@@ -1,5 +1,4 @@
 import Utils from "../Utils";
-
 const {
   els,
   elsFn,
@@ -9,24 +8,24 @@ const {
   getNestedValue,
   setImmutableValue,
 } = Utils;
-let topWindowId = 0;
 
 function WindowManager(state) {
-  const windowOrderItemsPath = ["windows", "orderedItems"];
-  const windowTaskbarOrderPath = ["windows", "taskbarOrder"];
-  const windowRenderOrderPath = ["windows", "zIndexOrder"];
+  let topWindowId = 0;
+  const orderItemsPath = ["windows", "orderedItems"];
+  const taskbarOrderPath = ["windows", "taskbarOrder"];
+  const renderOrderPath = ["windows", "renderOrder"];
+  const keyDictionaryPath = ["windows", "keyDictionary"];
 
   // create a window instance
   function _makeWindow(props) {
     const { children } = props;
     let { key, title } = props;
-
     let {
       isOpen = false,
       isFocused = false,
       isDragDisabled = false,
       isResizeDisabled = false,
-      disablePointerEventsOnBlur = false,
+      disablePointerEventsOnBlur = true,
       position = null,
       zIndex = 1,
       size = null,
@@ -70,20 +69,51 @@ function WindowManager(state) {
   function createWindow(props = {}) {
     let window = _makeWindow(props);
     //window.key
-    state.push(windowOrderItemsPath, window);
+    state.push(orderItemsPath, window);
 
     state.set(["windows", "items", window.id], window);
-    state.push(windowTaskbarOrderPath, window.id);
-    state.push(windowRenderOrderPath, window.id);
+    state.set([...keyDictionaryPath, window.key], window.id);
+    state.push(taskbarOrderPath, window.id);
+    state.push(renderOrderPath, window.id);
 
     if (props.isFocused) {
       setFocused(window.id, true);
     }
   }
 
+  function removeWindow(id) {
+    let window = getWindow(id);
+    if (isDef(window)) {
+      // Remove taskbar order
+      let oldWindowTaskBarOrder = state.get(taskbarOrderPath, []);
+      let newWindowTaskBarOrder = oldWindowTaskBarOrder.filter((v) => v !== id);
+      state.set(taskbarOrderPath, newWindowTaskBarOrder);
+
+      // Remove render order
+      let oldWindowRenderOrder = state.get(renderOrderPath, []);
+      let newWindowRenderOrder = oldWindowRenderOrder.filter((v) => v !== id);
+      state.set(renderOrderPath, newWindowRenderOrder);
+
+      // Remove from lookups
+      state.remove([...keyDictionaryPath, window.key]);
+
+      // Remove window
+      state.remove(["windows", "items", id]);
+    }
+  }
+
+  // Get window or nested value
   function getWindow(id, path = [], fallback = null) {
     let _path = isArr(path) ? path : [path];
     return state.get(["windows", "items", id, ..._path], fallback);
+  }
+
+  function getWindowByKey(key) {
+    let lookupId = state.get([...keyDictionaryPath, key], null);
+    if (isDef(lookupId)) {
+      return getWindow(lookupId);
+    }
+    return null;
   }
 
   function setValue(id, path, value) {
@@ -104,17 +134,21 @@ function WindowManager(state) {
     return state.get(["windows", "taskbarOrder"], []);
   }
 
-  function getZIndexOrder() {
-    return state.get(windowRenderOrderPath, []);
+  function setTaskbarOrder(value) {
+    state.set(["windows", "taskbarOrder"], value);
+  }
+
+  function getRenderOrder() {
+    return state.get(renderOrderPath, []);
   }
 
   function getWindowsKeyed() {
     return state.get(["windows", "items"], {});
   }
 
-  function getZIndexOrderedWindows() {
+  function getRenderOrderedWindows() {
     let idIndexedWindows = getWindowsKeyed();
-    return getZIndexOrder().map((id) => idIndexedWindows[id]);
+    return getRenderOrder().map((id) => idIndexedWindows[id]);
   }
 
   function getKey(key) {
@@ -145,18 +179,18 @@ function WindowManager(state) {
       const wasFocused = getWindow(id, "isFocused", false);
       if (!wasFocused) {
         // change the render order
-        let foundIndex = getZIndexOrder().findIndex((v) => v === id);
+        let foundIndex = getRenderOrder().findIndex((v) => v === id);
         if (foundIndex > -1) {
-          let fromPath = [...windowRenderOrderPath, foundIndex];
+          let fromPath = [...renderOrderPath, foundIndex];
           let val = state.get(fromPath);
           state.remove(fromPath);
-          state.push(windowRenderOrderPath, val);
+          state.push(renderOrderPath, val);
         }
       }
     }
 
     let zIndex = 0;
-    getZIndexOrder().forEach((windowId) => {
+    getRenderOrder().forEach((windowId) => {
       let zi = zIndex++;
       setValue(windowId, "zIndex", zi);
       if (windowId === id) {
@@ -165,21 +199,6 @@ function WindowManager(state) {
         setValue(windowId, "isFocused", false);
       }
     });
-  }
-
-  function removeWindow(id) {
-    // Remove task bar order
-    let oldWindowTaskBarOrder = state.get(windowTaskbarOrderPath, []);
-    let newWindowTaskBarOrder = oldWindowTaskBarOrder.filter((v) => v !== id);
-    state.set(windowTaskbarOrderPath, newWindowTaskBarOrder);
-
-    // Remove render order
-    let oldWindowRenderOrder = state.get(windowRenderOrderPath, []);
-    let newWindowRenderOrder = oldWindowRenderOrder.filter((v) => v !== id);
-    state.set(windowRenderOrderPath, newWindowRenderOrder);
-
-    // Remove window
-    state.remove(["windows", "items", id]);
   }
 
   function toggleWindow(id, forcedToggle = false) {
@@ -219,15 +238,16 @@ function WindowManager(state) {
 
   const publicScope = {
     createWindow,
+    getWindowByKey,
     getWindow,
     setWindow,
     setValue,
     getOrderedWindows,
     getTaskbarOrder,
-    getTaskbarOrder,
-    getZIndexOrder,
+    setTaskbarOrder,
+    getRenderOrder,
     getWindowsKeyed,
-    getZIndexOrderedWindows,
+    getRenderOrderedWindows,
     getKey,
     setPosition,
     setSize,

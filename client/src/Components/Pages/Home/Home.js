@@ -16,6 +16,9 @@ import BlurredWrapper from "../../Containers/BlurredWrapper/";
 import AppSidebar from "../../../Components/TopLevel/AppSizebar/";
 import AppHeader from "../../../Components/TopLevel/AppHeader/";
 import WindowManager from "../../../Utils/WindowManager";
+import BugReportIcon from "@material-ui/icons/BugReport";
+import EmojiPeopleIcon from "@material-ui/icons/EmojiPeople";
+
 import "./Home.scss";
 
 const {
@@ -29,14 +32,25 @@ const {
   setImmutableValue,
   deleteImmutableValue,
 } = Utils;
-let topWindowId = 0;
 
 function WindowAComponent(props) {
   const { size, position, containerSize } = props;
   let horizontalItems = {
-    0: <div>item 0</div>,
-    1: <div>item 1</div>,
-    2: <div>item 2</div>,
+    0: (
+      <div style={{ backgroundColor: "black", padding: "10px", margin: "4px" }}>
+        item 0
+      </div>
+    ),
+    1: (
+      <div style={{ backgroundColor: "black", padding: "10px", margin: "4px" }}>
+        item 1
+      </div>
+    ),
+    2: (
+      <div style={{ backgroundColor: "black", padding: "10px", margin: "4px" }}>
+        item 2
+      </div>
+    ),
   };
 
   let _horizontalOrder = [0, 1, 2];
@@ -61,12 +75,13 @@ function WindowAComponent(props) {
                 </pre>
               </div>
             </div>
+
+            <DragListV></DragListV>
             <DragListH
               items={horizontalItems}
               order={horizontalOrder}
               setOrder={setHorizontalOrder}
             />
-            <DragListV></DragListV>
           </div>
         </div>
       </div>
@@ -77,8 +92,8 @@ function WindowAComponent(props) {
 const initialState = {
   windows: {
     taskbarOrder: [],
-    zIndexOrder: [],
-    orderedItems: [],
+    renderOrder: [],
+    keyDictionary: {},
     items: {},
   },
 };
@@ -86,72 +101,84 @@ const initialState = {
 const state = StateBuffer(initialState);
 const windowManager = WindowManager(state);
 
-// Dragable Lists window
-windowManager.createWindow({
-  title: "Window A",
-  isOpen: false,
-  position: {
-    left: 300,
-    top: 50,
-  },
-  size: {
-    width: 700,
-    height: 700,
-  },
-  children: WindowAComponent,
-  actions: () => (
-    <FillFooter height={40} classNames={["footer", "actions", "center-center"]}>
-      <div {...classes("spacer")} />
-      <div {...classes("button", "not-allowed")}>Cancel</div>
-      <div {...classes("button", "not-allowed")}>Confirm</div>
-    </FillFooter>
-  ),
-});
+function createWindowA() {
+  // Dragable Lists window
+  windowManager.createWindow({
+    title: "Window A",
+    isFocused: true,
+    position: {
+      left: 300,
+      top: 50,
+    },
+    size: {
+      width: 700,
+      height: 700,
+    },
+    children: WindowAComponent,
+    actions: () => (
+      <FillFooter
+        height={40}
+        classNames={["footer", "actions", "center-center"]}
+      >
+        <div {...classes("spacer")} />
+        <div {...classes("button", "not-allowed")}>Cancel</div>
+        <div {...classes("button", "not-allowed")}>Confirm</div>
+      </FillFooter>
+    ),
+  });
+}
 
-// Stom trooper dancing iframe
-windowManager.createWindow({
-  title: "Trooper - IFrame",
-  isOpen: false,
-  isFocused: false,
-  position: {
-    left: 1000,
-    top: 50,
-  },
-  size: {
-    width: 400,
-    height: 600,
-  },
-  disablePointerEventsOnBlur: true,
-  children: ({ size, position, containerSize }) => (
-    <iframe
-      src="https://threejs.org/examples/webgl_loader_collada_skinning.html"
-      style={{ height: "100%", width: "100%" }}
-    />
-  ),
-});
+function createTrooperIframe() {
+  // Stom trooper dancing iframe
+  windowManager.createWindow({
+    title: "Trooper - IFrame",
+    key: "trooper",
+    isFocused: true,
+    position: {
+      left: 100,
+      top: 50,
+    },
+    size: {
+      width: 400,
+      height: 600,
+    },
+    disablePointerEventsOnBlur: true,
+    children: ({ size, position, containerSize }) => (
+      <iframe
+        src="https://threejs.org/examples/webgl_loader_collada_skinning.html"
+        style={{ height: "100%", width: "100%" }}
+      />
+    ),
+  });
+}
 
-// Debuger window
-windowManager.createWindow({
-  id: ++topWindowId,
-  title: "Debuger",
-  isFocused: true,
-  position: {
-    left: 1000,
-    top: 50,
-  },
-  size: {
-    width: 400,
-    height: 600,
-  },
-  children: ({ size, position, containerSize }) => (
-    <pre {...classes("column", "align-left", "full-width")}>
-      <xmp>
-        state:
-        {JSON.stringify(state.get(), null, 2)}
-      </xmp>
-    </pre>
-  ),
-});
+function createDebugger() {
+  // Debuger window
+  windowManager.createWindow({
+    key: "debugger",
+    title: "Debuger",
+    isFocused: true,
+    position: {
+      left: 1000,
+      top: 50,
+    },
+    size: {
+      width: 400,
+      height: 600,
+    },
+    children: ({ size, position, containerSize }) => (
+      <pre {...classes("column", "align-left", "full-width")}>
+        <xmp>
+          state:
+          {JSON.stringify(state.get(), null, 2)}
+        </xmp>
+      </pre>
+    ),
+  });
+}
+
+createWindowA();
+createDebugger();
 
 function Home(props) {
   const [isLeftSnapIndicator, setIsLeftSnapIndicator] = useState(false);
@@ -188,9 +215,52 @@ function Home(props) {
     });
   };
 
+  const openDebugger = () => {
+    let window = windowManager.getWindowByKey("debugger");
+    if (isDef(window)) {
+      windowManager.setFocused(window.id);
+    } else {
+      createDebugger();
+    }
+  };
+
+  const openDancingTrooper = () => {
+    let window = windowManager.getWindowByKey("trooper");
+    if (isDef(window)) {
+      windowManager.setFocused(window.id);
+    } else {
+      createTrooperIframe();
+    }
+  };
+
+  let taskBarItems = {};
+  windowManager.getOrderedWindows().forEach((window) => {
+    let outterClasses = [];
+    if (window.isOpen) outterClasses.push("open");
+    if (window.isFocused) outterClasses.push("focused");
+
+    taskBarItems[window.id] = (
+      <div
+        {...classes("button", "noselect", outterClasses)}
+        key={window.id}
+        onClick={() => windowManager.toggleWindow(window.id)}
+      >
+        <div {...classes("truncate-inner")} key={window.id}>
+          {window.title}
+        </div>
+      </div>
+    );
+  });
+
   return (
     <div {...classes("full", "row", "main_bkgd")}>
       <AppSidebar>
+        <div {...classes("button")} onClick={() => openDancingTrooper()}>
+          <EmojiPeopleIcon />
+        </div>
+        <div {...classes("button")} onClick={() => openDebugger()}>
+          <BugReportIcon />
+        </div>
         <div {...classes("button")} onClick={() => addWindow()}>
           <AddIcon />
         </div>
@@ -255,23 +325,13 @@ function Home(props) {
           <div {...classes("full")}>
             <BlurredWrapper>
               <div {...classes("taskbar", "full", "tinted-dark")}>
-                {windowManager.getOrderedWindows().map((window) => {
-                  let outterClasses = [];
-                  if (window.isOpen) outterClasses.push("open");
-                  if (window.isFocused) outterClasses.push("focused");
-
-                  return (
-                    <div
-                      {...classes("button", "noselect", outterClasses)}
-                      key={window.id}
-                      onClick={() => windowManager.toggleWindow(window.id)}
-                    >
-                      <div {...classes("truncate-inner")} key={window.id}>
-                        {window.title}
-                      </div>
-                    </div>
-                  );
-                })}
+                <DragListH
+                  items={taskBarItems}
+                  order={windowManager.getTaskbarOrder()}
+                  setOrder={(newOrder) => {
+                    windowManager.setTaskbarOrder(newOrder);
+                  }}
+                />
               </div>
             </BlurredWrapper>
           </div>

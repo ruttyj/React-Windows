@@ -3,7 +3,7 @@ import Utils from "../../../Utils";
 import { motion } from "framer-motion";
 import { useUp } from "../../../Utils/useWindowEvents";
 
-const { classes } = Utils;
+const { isDef, classes } = Utils;
 
 function DragHandle(props) {
   const ef = () => {}; // empty function
@@ -38,9 +38,13 @@ function DragHandle(props) {
     }
   });
 
+  const _props = { ...props };
+  if (isDef(_props.onUp)) delete _props.onUp;
+  if (isDef(_props.onDown)) delete _props.onDown;
+
   return (
     <motion.div
-      {...props}
+      {..._props}
       {...classes(
         "noselect",
         !disabled ? classNames : "",
