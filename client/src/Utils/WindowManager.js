@@ -195,6 +195,9 @@ function WindowManager(state) {
       setValue(windowId, "zIndex", zi);
       if (windowId === id) {
         setValue(windowId, "isFocused", isFocused);
+        if (isFocused) {
+          setValue(id, "isOpen", isFocused);
+        }
       } else {
         setValue(windowId, "isFocused", false);
       }

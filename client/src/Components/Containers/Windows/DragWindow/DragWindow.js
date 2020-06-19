@@ -13,9 +13,11 @@ import FillContent from "../../../../../src/Components/Containers/FillContainer/
 import FillHeader from "../../../../../src/Components/Containers/FillContainer/FillHeader";
 import DragHandle from "../../../../../src/Components/Functional/DragHandle/";
 import Utils from "../../../../../src/Utils/";
-import DragListV from "../../../../../src/Components/Containers/DragListV";
-import SizeBackgroundColor from "../../../../../src/Components/Containers/SizeBackgroundColor/";
-
+import MoreVertIcon from "@material-ui/icons/MoreVert";
+import Button from "@material-ui/core/Button";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
 import "./DragWindow.scss";
 const { getNestedValue, classes, setImmutableValue, isFunc, isDef } = Utils;
 
@@ -377,6 +379,16 @@ const DragWindow = withResizeDetector(function(props) {
     position: getPosition(),
   };
 
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   // Define the contents of the UI
   let headerContents = "";
   let titleContents = (
@@ -410,27 +422,45 @@ const DragWindow = withResizeDetector(function(props) {
     </div>
   );
 
+  let lockDragLabel = isDragDisabled ? "Drag disabled" : "Drag enabled";
+  let lockResizeLabel = isResizeDisabled ? "Resize disabled" : "Resize enabled";
+
   let rightHeaderActionContents = (
-    <div {...classes("actions", "row")}>
-      <div
-        {...classes("button")}
-        onClick={() => toggleDragEnabled()}
-        title={!isDragDisabled ? "Disable drag" : "Enable drag"}
-      >
-        {!isDragDisabled ? <LockOpenIcon /> : <LockIcon />}
+    <div {...classes("actions", "row", "right")} style={{ width: "102px" }}>
+      <div {...classes("button")} onClick={handleClick}>
+        <MoreVertIcon />
       </div>
 
-      <div
-        {...classes("button")}
-        onClick={() => toggleResizeDisabled()}
-        title={!isResizeDisabled ? "Disable resize" : "Enable resize"}
+      <Menu
+        id="simple-menu"
+        anchorEl={anchorEl}
+        keepMounted
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
       >
-        {!isResizeDisabled ? <LockOpenIcon /> : <LockIcon />}
-      </div>
+        <MenuItem
+          onClick={handleClose}
+          onClick={() => {
+            toggleDragEnabled();
+          }}
+        >
+          <ListItemIcon>
+            {!isDragDisabled ? <LockOpenIcon /> : <LockIcon />}
+          </ListItemIcon>{" "}
+          {lockDragLabel}
+        </MenuItem>
 
-      <div {...classes("button", "not-allowed")} title="Anchor">
-        <FlareIcon />
-      </div>
+        <MenuItem
+          onClick={() => {
+            toggleResizeDisabled();
+          }}
+        >
+          <ListItemIcon>
+            {!isResizeDisabled ? <LockOpenIcon /> : <LockIcon />}
+          </ListItemIcon>
+          {lockResizeLabel}
+        </MenuItem>
+      </Menu>
     </div>
   );
 
