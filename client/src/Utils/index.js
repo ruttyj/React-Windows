@@ -2,12 +2,12 @@ import classNames from "classname";
 
 const els = (v, el) => (isDef(v) ? v : el);
 const elsFn = (v, fn) => (isDef(v) ? v : fn());
-const isDef = (v) => v !== undefined && v !== null;
-const isArr = (v) => isDef(v) && Array.isArray(v);
-const isFunc = (v) => isDef(v) && typeof v === "function";
-const isStr = (v) => isDef(v) && typeof v === "string";
-const isNum = (v) => isDef(v) && typeof v === "number";
-const isObj = (v) => isDef(v) && typeof v === "object";
+const isDef = v => v !== undefined && v !== null;
+const isArr = v => isDef(v) && Array.isArray(v);
+const isFunc = v => isDef(v) && typeof v === "function";
+const isStr = v => isDef(v) && typeof v === "string";
+const isNum = v => isDef(v) && typeof v === "number";
+const isObj = v => isDef(v) && typeof v === "object";
 const inRangeExclusive = (min, val, max) => min < val < max;
 const inRangeInclusive = (min, val, max) => min <= val <= max;
 
@@ -62,7 +62,7 @@ const setNestedValue = function(a, b, c, d) {
     var path = tempPath instanceof Array ? tempPath : [tempPath];
     var lastIndex = path.length - 1;
     var current = 0;
-    path.forEach((key) => {
+    path.forEach(key => {
       if (current === lastIndex) {
         setter(ref, key, value);
       } else {
@@ -154,16 +154,16 @@ function setImmutableValue(ref, _path, value) {
 }
 
 // Flatten the mess of classes given as props into a usable attribute
-// @usage <div {...classes(["a1", "b1", ["c1", ["d1"]]], "e1", ["f1"])} /> produces <div className={classNames("a1", "b1", "c1", "d1", "e1", "f1")}/>
+// @usage <div {...classes(["a1", "b1", ["c1", ["d1"]]], "e1", ["f1"], "g1 h1")} /> produces <div className={classNames("a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1")}/>
 function classes(...args) {
   let _args = [];
   if (isDef(args)) {
-    args.forEach((arg) => {
+    args.forEach(arg => {
       if (isDef(arg)) {
         if (isArr(arg)) {
           _args = [..._args, ...arg.flat(0)];
         } else if (isStr(arg)) {
-          _args = [..._args, arg];
+          _args = [..._args, ...arg.split(" ")];
         }
       }
     });
@@ -171,7 +171,7 @@ function classes(...args) {
   return { className: classNames(..._args) };
 }
 
-export default {
+const publicScope = {
   // variable checks
   isDef,
   isArr,
@@ -194,5 +194,7 @@ export default {
   isDefNested,
   //@TODO checkNested(ref, [path], op, value)
   setImmutableValue,
-  deleteImmutableValue,
+  deleteImmutableValue
 };
+
+export default publicScope;

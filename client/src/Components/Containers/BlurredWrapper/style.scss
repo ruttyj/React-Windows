@@ -23,6 +23,8 @@
 body,
 .blurred_bkgd:before,
 .blurred_bkgd:after {
+  -webkit-transition: background-image 0.2s ease-in-out;
+  transition: background-image 0.2s ease-in-out;
   background-image: var(--bkgd-image);
   background-size: cover;
   background-position: center, center;

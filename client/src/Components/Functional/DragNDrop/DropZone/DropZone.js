@@ -1,7 +1,5 @@
 import { isDef, trueFunc, emptyFunc } from "../../utils/";
-
 import React from "react";
-
 import { useDrop } from "react-dnd";
 
 export default ({
@@ -12,7 +10,7 @@ export default ({
   dropProps = {},
   onDrop = trueFunc,
   onHover = trueFunc,
-  canDrop = trueFunc,
+  canDrop = trueFunc
 }) => {
   const [{ isOver, isOverCurrent }, drop] = useDrop({
     accept: accept,
@@ -25,10 +23,10 @@ export default ({
     },
     hover: (dragProps, monitor) => onHover({ dragProps, monitor, dropProps }),
     canDrop: (dragProps, monitor) => canDrop({ dragProps, monitor, dropProps }),
-    collect: (monitor) => ({
+    collect: monitor => ({
       isOver: monitor.isOver(),
-      isOverCurrent: monitor.isOver({ shallow: true }),
-    }),
+      isOverCurrent: monitor.isOver({ shallow: true })
+    })
   });
 
   let isTargeted = isOverCurrent || (isOver && greedy);
@@ -36,13 +34,12 @@ export default ({
   return (
     <div
       ref={drop}
-      className="peanut"
       style={{
         position: "relative",
         minWidth: "10px",
         minHeight: "10px",
         display: "inline-flex",
-        ...style,
+        ...style
       }}
     >
       <div style={{ display: "inline-flex", ...style }}>{children}</div>
@@ -56,7 +53,7 @@ export default ({
             width: "100%",
             zIndex: 1,
             opacity: 0.2,
-            backgroundColor: "black",
+            backgroundColor: "black"
           }}
         />
       )}

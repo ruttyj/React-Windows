@@ -1,7 +1,8 @@
 import React from "react";
-
+import Utils from "../../../Utils";
+const { classes } = Utils;
 // Children will fill space
-export default ({ children }) => {
+export default ({ children, classNames = [] }) => {
   return (
     <div
       style={{
@@ -9,8 +10,9 @@ export default ({ children }) => {
         height: "100%",
         position: "relative",
         display: "flex",
-        flexDirection: "column",
+        flexDirection: "column"
       }}
+      {...classes(classNames)}
     >
       {children}
     </div>

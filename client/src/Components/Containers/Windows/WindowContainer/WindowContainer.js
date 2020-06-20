@@ -9,8 +9,10 @@ const { isFunc, classes } = Utils;
 const WindowContainer = withResizeDetector(function(props) {
   const { children } = props;
   const { width, height } = props;
-  const { leftIndicator } = props;
+  const { windowManager, leftIndicator } = props;
   const containerSize = { width, height };
+
+  windowManager.setContainerSize(containerSize);
 
   // save these indicators for after when alternate anchor points are supported IE: se / (bottom, right)
   // const otherIndicators = (
@@ -23,11 +25,11 @@ const WindowContainer = withResizeDetector(function(props) {
     <RelLayer {...classes("full_wrapper", "full")}>
       <div {...classes("top-left-indicator")}>
         <div {...classes("indicator-inner")}>
-          <div {...classes("indicator-center")}></div>
-          <div {...classes("top-left-lines")}></div>
+          <div {...classes("indicator-center")} />
+          <div {...classes("top-left-lines")} />
         </div>
       </div>
-      <div {...classes("left-indicator", leftIndicator ? "active" : "")}></div>
+      <div {...classes("left-indicator", leftIndicator ? "active" : "")} />
       {isFunc(children) ? children({ containerSize }) : children}
     </RelLayer>
   );

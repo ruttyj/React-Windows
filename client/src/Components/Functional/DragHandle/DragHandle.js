@@ -35,6 +35,7 @@ function DragHandle(props) {
   useUp(() => {
     if (isDown) {
       onUp();
+      setDown(false);
     }
   });
 

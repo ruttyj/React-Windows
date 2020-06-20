@@ -1,13 +1,5 @@
 import Utils from "../Utils";
-const {
-  els,
-  elsFn,
-  isDef,
-  isArr,
-  isFunc,
-  getNestedValue,
-  setImmutableValue,
-} = Utils;
+const { els, elsFn, isDef, isArr, getNestedValue, setImmutableValue } = Utils;
 
 function WindowManager(state) {
   let topWindowId = 0;
@@ -15,6 +7,15 @@ function WindowManager(state) {
   const taskbarOrderPath = ["windows", "taskbarOrder"];
   const renderOrderPath = ["windows", "renderOrder"];
   const keyDictionaryPath = ["windows", "keyDictionary"];
+  const containerSizePath = ["windows", "containerSize"];
+
+  state.set("windows", {
+    containerSize: { width: -1, height: -1 },
+    taskbarOrder: [],
+    renderOrder: [],
+    keyDictionary: {},
+    items: {},
+  });
 
   // create a window instance
   function _makeWindow(props) {
@@ -25,7 +26,7 @@ function WindowManager(state) {
       isFocused = false,
       isDragDisabled = false,
       isResizeDisabled = false,
-      disablePointerEventsOnBlur = true,
+      disablePointerEventsOnBlur = false,
       position = null,
       zIndex = 1,
       size = null,
@@ -60,6 +61,7 @@ function WindowManager(state) {
       isDragDisabled,
       isResizeDisabled,
       disablePointerEventsOnBlur,
+      isTempDisablePointerEvents: false,
       children,
       actions,
     };
@@ -127,7 +129,13 @@ function WindowManager(state) {
 
   function getOrderedWindows() {
     let idIndexedWindows = getWindowsKeyed();
-    return getTaskbarOrder().map((id) => idIndexedWindows[id]);
+    let result = [];
+    getTaskbarOrder().forEach((id) => {
+      if (isDef(idIndexedWindows[id])) {
+        result.push(idIndexedWindows[id]);
+      }
+    });
+    return result;
   }
 
   function getTaskbarOrder() {
@@ -212,7 +220,6 @@ function WindowManager(state) {
 
   function toggleWindow(id, forcedToggle = false) {
     let window = getWindow(id);
-    let newValue = getOrderedWindows();
     if (isDef(window)) {
       const wasOpen = getNestedValue(window, "isOpen", false);
       const wasFocused = getNestedValue(window, "isFocused", false);
@@ -240,12 +247,40 @@ function WindowManager(state) {
         }
       }
 
-      newValue = setFocused(id, isFocused);
+      setFocused(id, isFocused);
       setValue(id, "isOpen", isOpen);
     }
   }
 
+  function toggleOtherWindowsPointerEvents(id, value = true) {
+    getRenderOrder().forEach((windowId) => {
+      let window = getWindow(windowId);
+      if (windowId !== id) {
+        setWindow(
+          windowId,
+          setImmutableValue(window, "isTempDisablePointerEvents", value)
+        );
+      }
+    });
+  }
+
+  function setContainerSize(size) {
+    let prevSize = getContainerSize();
+    if (size.width !== prevSize.width || size.height !== prevSize.height) {
+      state.set(containerSizePath, { ...size });
+    }
+  }
+
+  function getContainerSize(fallback = { width: -1, height: -1 }) {
+    return state.get(containerSizePath, fallback);
+  }
+
+  function getState() {
+    return state;
+  }
+
   const publicScope = {
+    getState,
     createWindow,
     getWindowByKey,
     getWindow,
@@ -264,6 +299,9 @@ function WindowManager(state) {
     setFocused,
     removeWindow,
     toggleWindow,
+    toggleOtherWindowsPointerEvents,
+    setContainerSize,
+    getContainerSize,
   };
 
   function getPublic() {
