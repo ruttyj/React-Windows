@@ -3,7 +3,6 @@ const { els, elsFn, isDef, isArr, getNestedValue, setImmutableValue } = Utils;
 
 function WindowManager(state) {
   let topWindowId = 0;
-  const orderItemsPath = ["windows", "orderedItems"];
   const taskbarOrderPath = ["windows", "taskbarOrder"];
   const renderOrderPath = ["windows", "renderOrder"];
   const keyDictionaryPath = ["windows", "keyDictionary"];
@@ -70,9 +69,6 @@ function WindowManager(state) {
   // create a window and add to manager
   function createWindow(props = {}) {
     let window = _makeWindow(props);
-    //window.key
-    state.push(orderItemsPath, window);
-
     state.set(["windows", "items", window.id], window);
     state.set([...keyDictionaryPath, window.key], window.id);
     state.push(taskbarOrderPath, window.id);
