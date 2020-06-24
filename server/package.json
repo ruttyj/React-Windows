@@ -17,6 +17,7 @@
     "request": "^2.88.2"
   },
   "devDependencies": {
+    "constantinople": "^4.0.1",
     "nodemon": "^2.0.4"
   }
 }
