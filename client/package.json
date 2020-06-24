@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "react-window-modals-dev",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -11,7 +11,6 @@
     "array-move": "^2.2.2",
     "awesome-debounce-promise": "^2.1.0",
     "classname": "0.0.0",
-    "classnames": "^2.2.6",
     "framer-motion": "^1.11.0",
     "immutability-helper": "^3.1.1",
     "laravel-mix": "^5.0.4",
@@ -46,5 +45,7 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "keywords": [],
+  "description": ""
 }

@@ -1,7 +1,5 @@
 import classNames from "classname";
 
-const els = (v, el) => (isDef(v) ? v : el);
-const elsFn = (v, fn) => (isDef(v) ? v : fn());
 const isDef = v => v !== undefined && v !== null;
 const isArr = v => isDef(v) && Array.isArray(v);
 const isFunc = v => isDef(v) && typeof v === "function";
@@ -14,6 +12,15 @@ const inRangeInclusive = (min, val, max) => min <= val <= max;
 function clamp(min, value, max) {
   return Math.min(Math.max(min, value), max);
 }
+
+//els will return the first item which exists
+const els = (...things) => {
+  for (let i = 0; i < things.length; ++i) {
+    if (isDef(things[i])) return things[i];
+  }
+  return undefined;
+};
+const elsFn = (v, fn) => (isDef(v) ? v : fn());
 
 const getNestedValue = function(reference, path, fallback = undefined) {
   path = isArr(path) ? path : [path];

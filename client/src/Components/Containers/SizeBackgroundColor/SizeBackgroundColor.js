@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { withResizeDetector } from "react-resize-detector";
-import Utils from "../../../../src/Utils/";
+import Utils from "../../../Utils/";
 
 const { classes } = Utils;
 

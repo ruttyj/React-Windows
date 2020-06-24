@@ -1,13 +1,18 @@
-.blurred_bkgd {
+:root {
+  --bkgd-image: url(https://wallpapershome.com/images/pages/pic_h/16728.jpeg);
+  --bkgd-blur: 15px;
+}
+
+.blurred-bkgd {
   position: relative;
   overflow: hidden;
 
-  .focus_content {
+  .focus-content {
     z-index: 3;
   }
 }
-.blurred_bkgd:before,
-.blurred_bkgd:after {
+.blurred-bkgd:before,
+.blurred-bkgd:after {
   content: "";
   display: block;
   position: absolute;
@@ -21,8 +26,8 @@
 }
 
 body,
-.blurred_bkgd:before,
-.blurred_bkgd:after {
+.blurred-bkgd:before,
+.blurred-bkgd:after {
   -webkit-transition: background-image 0.2s ease-in-out;
   transition: background-image 0.2s ease-in-out;
   background-image: var(--bkgd-image);
@@ -31,7 +36,7 @@ body,
   background-attachment: fixed;
 }
 
-.blurred_bkgd:after {
+.blurred-bkgd:after {
   z-index: 2;
   background-repeat: no-repeat;
   background-size: cover;

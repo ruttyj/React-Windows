@@ -7,12 +7,12 @@ import FlareIcon from "@material-ui/icons/Flare";
 import LockIcon from "@material-ui/icons/Lock";
 import LockOpenIcon from "@material-ui/icons/LockOpen";
 import FullscreenIcon from "@material-ui/icons/Fullscreen";
-import FillContainer from "../../../../../src/Components/Containers/FillContainer/FillContainer";
-import FillContent from "../../../../../src/Components/Containers/FillContainer/FillContent";
-import FillHeader from "../../../../../src/Components/Containers/FillContainer/FillHeader";
-import FillFooter from "../../../../../src/Components/Containers/FillContainer/FillFooter";
-import DragHandle from "../../../../../src/Components/Functional/DragHandle/";
-import Utils from "../../../../../src/Utils";
+import FillContainer from "../../../../Components/Containers/FillContainer/FillContainer";
+import FillContent from "../../../../Components/Containers/FillContainer/FillContent";
+import FillHeader from "../../../../Components/Containers/FillContainer/FillHeader";
+import FillFooter from "../../../../Components/Containers/FillContainer/FillFooter";
+import DragHandle from "../../../../Components/Functional/DragHandle/";
+import Utils from "../../../../Utils";
 import "./SizeBackgroundColor";
 const { getNestedValue, classes, setImmutableValue } = Utils;
 
@@ -49,7 +49,7 @@ const SizeBackgroundColor = withResizeDetector(
   }
 );
 
-const DragWindow = withResizeDetector(function (props) {
+const DragWindow = withResizeDetector(function(props) {
   let { onToggleWindow: handleOnToggleWindow } = props;
   let { width: observedWidth, height: observedHeight } = props;
   let { title = "Untitled", containerSize } = props;
@@ -171,7 +171,7 @@ const DragWindow = withResizeDetector(function (props) {
 
   // Resize window
   const makeOnDragReize = (key) => {
-    return function (e, info) {
+    return function(e, info) {
       let delta = info.delta;
       if (delta.x !== 0 || delta.y !== 0) {
         let originalWidth = getNestedValue(size, "width", null);
@@ -367,12 +367,12 @@ const DragWindow = withResizeDetector(function (props) {
             }),
       }}
       transition={{ type: "spring", stiffness: 200 }}
-      {...classes("window", "blurred_bkgd")}
+      {...classes("window", "blurred-bkgd")}
     >
-      <div {...classes("full_wrapper", "main_bkgd", "relative")}>
+      <div {...classes("full_wrapper", "main-bkgd", "relative")}>
         <div {...classes("window-shell", "grow")}>
           {dragHandleContents}
-          <div {...classes(["inner_content", "grow", "column"])}>
+          <div {...classes(["inner-content", "grow", "column"])}>
             <FillContainer>
               <FillHeader>{headerContents}</FillHeader>
 

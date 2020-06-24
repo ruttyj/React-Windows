@@ -25,7 +25,7 @@ function AppSideBar(props) {
     <SideBar>
       <BlurredWrapper classNames={"full"}>
         <div
-          {...classes("full", "column", "noselect", "focus_content", "tinted")}
+          {...classes("full", "column", "noselect", "focus-content", "tinted")}
         >
           <div {...classes("button", "not-allowed")}>
             <MenuIcon />

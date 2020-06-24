@@ -83,9 +83,7 @@ function createWallpaperWindow(windowManager, isFocused = true) {
                 let state = windowManager.getState();
                 state.set(["theme", "wallpaper"], url);
               }}
-            >
-              .
-            </div>
+            />
           );
         })}
       </div>

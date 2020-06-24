@@ -8,18 +8,25 @@ import FlareIcon from "@material-ui/icons/Flare";
 import LockIcon from "@material-ui/icons/Lock";
 import LockOpenIcon from "@material-ui/icons/LockOpen";
 import FullscreenIcon from "@material-ui/icons/Fullscreen";
-import FillContainer from "../../../../../src/Components/Containers/FillContainer/FillContainer";
-import FillContent from "../../../../../src/Components/Containers/FillContainer/FillContent";
-import FillHeader from "../../../../../src/Components/Containers/FillContainer/FillHeader";
-import DragHandle from "../../../../../src/Components/Functional/DragHandle/";
-import Utils from "../../../../../src/Utils/";
+import FillContainer from "../../../../Components/Containers/FillContainer/FillContainer";
+import FillContent from "../../../../Components/Containers/FillContainer/FillContent";
+import FillHeader from "../../../../Components/Containers/FillContainer/FillHeader";
+import DragHandle from "../../../../Components/Functional/DragHandle/";
+import Utils from "../../../../Utils/";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import Button from "@material-ui/core/Button";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import "./DragWindow.scss";
-const { getNestedValue, classes, setImmutableValue, isFunc, isDef } = Utils;
+const {
+  getNestedValue,
+  classes,
+  setImmutableValue,
+  isFunc,
+  isDef,
+  els,
+} = Utils;
 let ef = () => {}; // empty function
 /*
  * Please excuse the mess
@@ -34,8 +41,9 @@ const DragWindow = withResizeDetector(function(props) {
     height, // provided by withResizeDetector
     minSize = {},
     title = "Untitled",
+    snapIndicator = {},
     children,
-    actions
+    actions,
   } = props;
   let {
     onSet = ef,
@@ -46,9 +54,10 @@ const DragWindow = withResizeDetector(function(props) {
     onDown: handleOnDown = ef,
     onUp: handleOnUp = ef,
     onToggleWindow: handleOnToggleWindow,
+    setSnapIndicator = ef,
     onSnapEnter = ef,
     onSnapLeave = ef,
-    onSnapRelease = ef
+    onSnapRelease = ef,
   } = props;
 
   const zIndex = getNestedValue(window, "zIndex", 0);
@@ -67,17 +76,17 @@ const DragWindow = withResizeDetector(function(props) {
   );
 
   const isFullSize = getNestedValue(window, "isFullSize", false);
-  const setFullSize = value => {
+  const setFullSize = (value) => {
     onSet("isFullSize", value);
   };
 
   const isDragDisabled = getNestedValue(window, "isDragDisabled", false);
-  const setDragDisabled = value => {
+  const setDragDisabled = (value) => {
     onSet("isDragDisabled", value);
   };
 
   const isResizeDisabled = getNestedValue(window, "isResizeDisabled", false);
-  const setResizeDisabled = value => {
+  const setResizeDisabled = (value) => {
     onSet("isResizeDisabled", value);
   };
   const toggleResizeDisabled = () => {
@@ -90,20 +99,20 @@ const DragWindow = withResizeDetector(function(props) {
   const getMinSize = () => {
     return {
       height: getNestedValue(minSize, "height", 100),
-      width: getNestedValue(minSize, "width", 250)
+      width: getNestedValue(minSize, "width", 250),
     };
   };
 
   const getSize = () => {
     return {
       height: window.size.height,
-      width: window.size.width
+      width: window.size.width,
     };
   };
   const getPosition = () => {
     return {
       left: window.position.left,
-      top: window.position.top
+      top: window.position.top,
     };
   };
 
@@ -124,15 +133,15 @@ const DragWindow = withResizeDetector(function(props) {
   const handleSizeWidth = useMotionValue(initialSize.width);
   const handlePosTop = useMotionValue(initialPosition.top);
   const handlePosLeft = useMotionValue(initialPosition.left);
-  const newPosLeft = useTransform(handlePosLeft, v => v);
-  const newPosTop = useTransform(handlePosTop, v => v);
+  const newPosLeft = useTransform(handlePosLeft, (v) => v);
+  const newPosTop = useTransform(handlePosTop, (v) => v);
 
   if (isFullSize) {
     if (newPosLeft.get() !== 0) newPosLeft.set(0);
     if (newPosTop.get() !== 0) newPosTop.set(0);
     onSetPosition({
       top: newPosTop.get(),
-      left: newPosLeft.get()
+      left: newPosLeft.get(),
     });
   }
 
@@ -187,12 +196,60 @@ const DragWindow = withResizeDetector(function(props) {
 
     onSetPosition(newPos);
     onSetSize(newSize);
+    //*
+    let boundaries = {
+      w: newPos.left,
+      e: newPos.left + newSize.width,
+      n: newPos.top,
+      s: newPos.top + newSize.height,
+    };
 
-    if (newPos.left < 4) {
-      if (isFunc(onSnapEnter)) onSnapEnter(window, "w");
-    } else {
-      if (isFunc(onSnapLeave)) onSnapLeave(window, "w");
+    let isWithinRange = {
+      w: newPos.left < 4,
+      e: containerSize.width - boundaries.e < 4,
+      n: newPos.top < 4,
+      s: containerSize.height - boundaries.s < 4,
+    };
+
+    let indicators = {
+      w: els(snapIndicator.w, false),
+      e: els(snapIndicator.e, false),
+      n: els(snapIndicator.n, false),
+      s: els(snapIndicator.s, false),
+    };
+
+    // left indicator active
+    if (isWithinRange.w && !indicators.w) {
+      setSnapIndicator("w", true);
     }
+    if (!isWithinRange.w && indicators.w) {
+      setSnapIndicator("w", false);
+    }
+
+    // right indicator active
+    if (isWithinRange.e && !indicators.e) {
+      setSnapIndicator("e", true);
+    }
+    if (!isWithinRange.e && indicators.e) {
+      setSnapIndicator("e", false);
+    }
+
+    // right indicator active
+    if (isWithinRange.n && !indicators.n) {
+      setSnapIndicator("n", true);
+    }
+    if (!isWithinRange.n && indicators.n) {
+      setSnapIndicator("n", false);
+    }
+
+    // right indicator active
+    if (isWithinRange.s && !indicators.s) {
+      setSnapIndicator("s", true);
+    }
+    if (!isWithinRange.s && indicators.s) {
+      setSnapIndicator("s", false);
+    }
+    //*/
   };
 
   const onDrag = (e, info) => {
@@ -205,11 +262,11 @@ const DragWindow = withResizeDetector(function(props) {
       if (delta.x !== 0 || delta.y !== 0) {
         const newPos = {
           left: handlePosLeft.get() + delta.x,
-          top: handlePosTop.get() + delta.y
+          top: handlePosTop.get() + delta.y,
         };
         const newSize = {
           height: handleSizeHeight.get(),
-          width: handleSizeWidth.get()
+          width: handleSizeWidth.get(),
         };
         updatePosAndSize(newPos, newSize, getMinSize(), containerSize);
         onSetFocus(true);
@@ -218,10 +275,13 @@ const DragWindow = withResizeDetector(function(props) {
   };
 
   const onDown = () => {
-    onSet("isDragging", true);
+    if (!window.isDragging) {
+      onSet("isDragging", true);
+      // let the parent know the window is being interacted with
+    }
 
-    // let the parent know the window is being interacted with
     handleOnDown(window);
+    console.log("onDown");
   };
 
   const onResizeDown = () => {
@@ -253,13 +313,13 @@ const DragWindow = withResizeDetector(function(props) {
   };
 
   // Resize window
-  const makeOnDragReize = key => {
+  const makeOnDragReize = (key) => {
     return function(e, info) {
       let delta = info.delta;
       if (!isResizeDisabled) {
         const size = {
           height: handleSizeHeight.get(),
-          width: handleSizeWidth.get()
+          width: handleSizeWidth.get(),
         };
         if (delta.x !== 0 || delta.y !== 0) {
           let originalWidth = getNestedValue(size, "width", null);
@@ -393,14 +453,15 @@ const DragWindow = withResizeDetector(function(props) {
   );
 
   const childArgs = {
+    window,
     containerSize,
     size: getSize(),
-    position: getPosition()
+    position: getPosition(),
   };
 
   const [anchorEl, setAnchorEl] = React.useState(null);
 
-  const handleClick = event => {
+  const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -523,6 +584,7 @@ const DragWindow = withResizeDetector(function(props) {
     }
   }
 
+  //------------------------------------
   // Window animation
   let animateState;
   if (window.isOpen) {
@@ -536,15 +598,15 @@ const DragWindow = withResizeDetector(function(props) {
       y: 100,
       transition: "linear",
       transitionEnd: {
-        display: "none"
-      }
+        display: "none",
+      },
     },
     visible: {
       opacity: 1,
       y: 0,
       transition: "linear",
-      display: "flex"
-    }
+      display: "flex",
+    },
   };
 
   let disablePointerEvents =
@@ -553,9 +615,15 @@ const DragWindow = withResizeDetector(function(props) {
     (disablePointerEventsOnBlur && !isFocused);
 
   const windowSize = getSize();
+  // Draw Window
   return (
     <motion.div
-      {...classes("window", "blurred_bkgd", classNames)}
+      {...classes(
+        "window",
+        "blurred-bkgd",
+        classNames,
+        window.isDragging ? "dragging" : ""
+      )}
       onMouseDown={() => {
         if (!isFocused) onSetFocus(true);
       }}
@@ -578,15 +646,15 @@ const DragWindow = withResizeDetector(function(props) {
           : {
               ...windowSize,
               maxHeight: windowSize.height,
-              maxWidth: windowSize.width
-            })
+              maxWidth: windowSize.width,
+            }),
       }}
       transition={{ type: "spring", stiffness: 200 }}
     >
-      <div {...classes("full_wrapper", "main_bkgd", "relative")}>
+      <div {...classes("full_wrapper", "main-bkgd", "relative")}>
         <div {...classes("window-shell", "grow")}>
           {dragHandleContents}
-          <div {...classes(["inner_content", "grow", "column"])}>
+          <div {...classes(["inner-content", "grow", "column"])}>
             <FillContainer>
               <FillHeader>{headerContents}</FillHeader>
 
@@ -595,7 +663,7 @@ const DragWindow = withResizeDetector(function(props) {
                   "window-content",
                   "tint-bkgd",
                   "column",
-                  disablePointerEvents && "disable-pointer-events"
+                  disablePointerEvents && "disable-pointer-events",
                 ]}
               >
                 {childContents}

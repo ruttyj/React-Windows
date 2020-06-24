@@ -10,10 +10,16 @@ function WindowManager(state) {
 
   state.set("windows", {
     containerSize: { width: -1, height: -1 },
+    snapIndicator: {
+      n: false,
+      s: false,
+      e: false,
+      w: false
+    },
     taskbarOrder: [],
     renderOrder: [],
     keyDictionary: {},
-    items: {},
+    items: {}
   });
 
   // create a window instance
@@ -29,7 +35,7 @@ function WindowManager(state) {
       position = null,
       zIndex = 1,
       size = null,
-      actions = null,
+      actions = null
     } = props;
 
     if (isFocused) {
@@ -37,11 +43,11 @@ function WindowManager(state) {
     }
     position = elsFn(position, () => ({
       left: 0,
-      top: 0,
+      top: 0
     }));
     size = elsFn(size, () => ({
       width: 700,
-      height: 700,
+      height: 700
     }));
 
     let id = ++topWindowId;
@@ -62,7 +68,7 @@ function WindowManager(state) {
       disablePointerEventsOnBlur,
       isTempDisablePointerEvents: false,
       children,
-      actions,
+      actions
     };
   }
 
@@ -73,7 +79,6 @@ function WindowManager(state) {
     state.set([...keyDictionaryPath, window.key], window.id);
     state.push(taskbarOrderPath, window.id);
     state.push(renderOrderPath, window.id);
-
     if (props.isFocused) {
       setFocused(window.id, true);
     }
@@ -84,12 +89,12 @@ function WindowManager(state) {
     if (isDef(window)) {
       // Remove taskbar order
       let oldWindowTaskBarOrder = state.get(taskbarOrderPath, []);
-      let newWindowTaskBarOrder = oldWindowTaskBarOrder.filter((v) => v !== id);
+      let newWindowTaskBarOrder = oldWindowTaskBarOrder.filter(v => v !== id);
       state.set(taskbarOrderPath, newWindowTaskBarOrder);
 
       // Remove render order
       let oldWindowRenderOrder = state.get(renderOrderPath, []);
-      let newWindowRenderOrder = oldWindowRenderOrder.filter((v) => v !== id);
+      let newWindowRenderOrder = oldWindowRenderOrder.filter(v => v !== id);
       state.set(renderOrderPath, newWindowRenderOrder);
 
       // Remove from lookups
@@ -126,7 +131,7 @@ function WindowManager(state) {
   function getOrderedWindows() {
     let idIndexedWindows = getWindowsKeyed();
     let result = [];
-    getTaskbarOrder().forEach((id) => {
+    getTaskbarOrder().forEach(id => {
       if (isDef(idIndexedWindows[id])) {
         result.push(idIndexedWindows[id]);
       }
@@ -153,23 +158,23 @@ function WindowManager(state) {
   // Get windows so frames are not rerendered when reordering taskbar
   function getAllWindows() {
     let items = state.get(["windows", "items"], {});
-    return Object.keys(items).map((key) => items[key]);
+    return Object.keys(items).map(key => items[key]);
   }
 
   function getRenderOrderedWindows() {
     let idIndexedWindows = getWindowsKeyed();
-    return getRenderOrder().map((id) => idIndexedWindows[id]);
+    return getRenderOrder().map(id => idIndexedWindows[id]);
   }
 
   function getKey(key) {
-    return getOrderedWindows().find((w) => isDef(w.key) && w.key === key);
+    return getOrderedWindows().find(w => isDef(w.key) && w.key === key);
   }
 
   function setPosition(id, position) {
     let window = getWindow(id);
     if (isDef(window)) {
       let clonedValue = setImmutableValue(window, "position", {
-        ...position,
+        ...position
       });
       setWindow(id, clonedValue);
     }
@@ -184,12 +189,16 @@ function WindowManager(state) {
   }
 
   function setFocused(id, value = null) {
+    // Check if we need to default the value
     let isFocused = !isDef(value) ? true : value;
+
+    // Try top Focus the window
     if (isFocused) {
+      // Was previously focused?
       const wasFocused = getWindow(id, "isFocused", false);
       if (!wasFocused) {
         // change the render order
-        let foundIndex = getRenderOrder().findIndex((v) => v === id);
+        let foundIndex = getRenderOrder().findIndex(v => v === id);
         if (foundIndex > -1) {
           let fromPath = [...renderOrderPath, foundIndex];
           let val = state.get(fromPath);
@@ -197,21 +206,22 @@ function WindowManager(state) {
           state.push(renderOrderPath, val);
         }
       }
-    }
 
-    let zIndex = 0;
-    getRenderOrder().forEach((windowId) => {
-      let zi = zIndex++;
-      setValue(windowId, "zIndex", zi);
-      if (windowId === id) {
-        setValue(windowId, "isFocused", isFocused);
-        if (isFocused) {
-          setValue(id, "isOpen", isFocused);
+      // Set the new render order for all open windows
+      let zIndex = 0;
+      getRenderOrder().forEach(windowId => {
+        let zi = zIndex++;
+        setValue(windowId, "zIndex", zi);
+        if (windowId === id) {
+          setValue(windowId, "isFocused", isFocused);
+          if (isFocused) {
+            setValue(id, "isOpen", isFocused);
+          }
+        } else {
+          setValue(windowId, "isFocused", false);
         }
-      } else {
-        setValue(windowId, "isFocused", false);
-      }
-    });
+      });
+    }
   }
 
   function toggleWindow(id, forcedToggle = false) {
@@ -249,13 +259,15 @@ function WindowManager(state) {
   }
 
   function toggleOtherWindowsPointerEvents(id, value = true) {
-    getRenderOrder().forEach((windowId) => {
+    getRenderOrder().forEach(windowId => {
       let window = getWindow(windowId);
-      if (windowId !== id) {
-        setWindow(
-          windowId,
-          setImmutableValue(window, "isTempDisablePointerEvents", value)
-        );
+      if (window.isOpen) {
+        if (windowId !== id) {
+          setWindow(
+            windowId,
+            setImmutableValue(window, "isTempDisablePointerEvents", value)
+          );
+        }
       }
     });
   }
@@ -297,7 +309,7 @@ function WindowManager(state) {
     toggleWindow,
     toggleOtherWindowsPointerEvents,
     setContainerSize,
-    getContainerSize,
+    getContainerSize
   };
 
   function getPublic() {
