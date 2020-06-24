@@ -6,11 +6,11 @@ export default ({ children, classNames = [] }) => {
   return (
     <div
       style={{
-        width: "100%",
-        height: "100%",
         position: "relative",
         display: "flex",
-        flexDirection: "column"
+        height: "100%",
+        flexGrow: 1,
+        flexDirection: "column",
       }}
       {...classes(classNames)}
     >
